@@ -57,5 +57,16 @@ public class UserRepository extends MySQLRepository implements SQLRepository<Use
 	public Boolean closeConnection() throws Exception {
 		return super.closeConnection();
 	}
+
+	@Override
+	public <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) throws Exception {
+		try {
+			super.updateWhereEquals(clauseColumn, clauseValue, updateColumn, updateValue);
+			return true;
+		} catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 	
 }

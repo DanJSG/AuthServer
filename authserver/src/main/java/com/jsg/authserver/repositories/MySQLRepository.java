@@ -16,7 +16,7 @@ public abstract class MySQLRepository {
 		Properties properties = new Properties();
 		properties.put("user", "localDev");
 		properties.put("password", "l0c4l_d3v!");
-		connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/courier", properties);
+		connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/courier?serverTimezone=UTC", properties);
 	}
 	
 	protected Boolean closeConnection() throws Exception {
@@ -45,6 +45,17 @@ public abstract class MySQLRepository {
 		statement.setObject(1, value);
 		ResultSet results = statement.executeQuery();
 		return results;
+	}
+	
+	protected <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) throws Exception {
+		String query = "UPDATE courier.`" + tableName + "` SET " + updateColumn + "= ? WHERE " + clauseColumn + " = ?;";
+		System.out.println(query);
+		PreparedStatement statement = connection.prepareStatement(query);
+		statement.setObject(1, updateValue);
+		statement.setObject(2, clauseValue);
+		System.out.println(statement.toString());
+		statement.executeUpdate();
+		return true;
 	}
 	
 	private String stringifyKeys(Map<String, Object> valueMap) {

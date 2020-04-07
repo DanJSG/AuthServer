@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.repositories.TokenRepository;
 import com.jsg.authserver.repositories.UserRepository;
@@ -69,7 +70,7 @@ public class AuthController {
 		System.out.println(xsrfRefreshToken);
 		TokenRepository tokenRepo = new TokenRepository();
 		// DB STUFF
-		if(!tokenRepo.save(new String[]{refreshToken, xsrfRefreshToken})) {
+		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken))) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
 		}
 		tokenRepo.closeConnection();
@@ -88,12 +89,12 @@ public class AuthController {
 		}
 		// DB STUFF
 		TokenRepository tokenRepo = new TokenRepository();
-		List<String[]> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
+		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
 		if(results == null || results.size() < 1) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		String[] tokenPair = results.get(0);
-		if(!headerToken.contentEquals(tokenPair[1])) {
+		TokenPair tokenPair = results.get(0);
+		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
 		// DB STUFF
@@ -106,12 +107,23 @@ public class AuthController {
 	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
 	@PostMapping(value = "/revoke")
 	public @ResponseBody ResponseEntity<Boolean> revoke(@CookieValue(name = refreshTokenCookieName, required = false) String cookieToken,
-			@RequestHeader String authorization, HttpServletResponse response) {
+			@RequestHeader String authorization, HttpServletResponse response) throws Exception {
 		String headerToken = AuthHeaderHandler.getBearerToken(authorization);
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
 		// TODO update refresh token validity in database
+		// DB STUFF
+		TokenRepository tokenRepo = new TokenRepository();
+		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
+		if(results == null || results.size() < 1) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+		}
+		TokenPair tokenPair = results.get(0);
+		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+		}
+		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
 		response.addCookie(deleteAuthCookie());
 		return ResponseEntity.status(HttpStatus.OK).body(true);
 	}

@@ -8,21 +8,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TokenRepository extends MySQLRepository implements SQLRepository<String[]> {
-		
-//	private static final int msDay = 86400000;
-	
+import com.jsg.authserver.datatypes.TokenPair;
+
+public class TokenRepository extends MySQLRepository implements SQLRepository<TokenPair> {
+			
 	public TokenRepository() throws Exception {
 		super.tableName = "auth.tokens";
 		super.openConnection();
 	}
 	
 	@Override
-	public Boolean save(String[] item) throws Exception {
+	public Boolean save(TokenPair item) throws Exception {
 		Map<String, Object> valueMap = new HashMap<>();
-		valueMap.put("tokenA", item[0]);
-		valueMap.put("tokenB", item[1]);
-//		valueMap.put("expires", new Date(Calendar.getInstance().getTimeInMillis() - (msDay * 28)));
+		valueMap.put("tokenA", item.getCookieToken());
+		valueMap.put("tokenB", item.getHeaderToken());
 		Calendar calendar = Calendar.getInstance();
 		calendar.add(Calendar.DATE, 28);
 		valueMap.put("expires", new Date(calendar.getTimeInMillis()));
@@ -37,22 +36,23 @@ public class TokenRepository extends MySQLRepository implements SQLRepository<St
 	}
 	
 	@Override
-	public <V> List<String[]> findWhereEqual(String searchColumn, V value) {
+	public <V> List<TokenPair> findWhereEqual(String searchColumn, V value) {
 		return findWhereEqual(searchColumn, value, 0);
 	}
 
 	@Override
-	public <V> List<String[]> findWhereEqual(String searchColumn, V value, int limit) {
+	public <V> List<TokenPair> findWhereEqual(String searchColumn, V value, int limit) {
 		try {
 			ResultSet results = super.findWhereEquals(searchColumn, value, "*", limit);
-			ArrayList<String[]> tokens = new ArrayList<>();
+			ArrayList<TokenPair> tokens = new ArrayList<>();
 			while(results.next()) {
-				tokens.add(new String[] {results.getString("tokenA"), results.getString("tokenB")});
+				tokens.add(new TokenPair(results.getString("tokenA"), results.getString("tokenB"), results.getLong("id")));
 			}
-			for(String[] token : tokens) {
+			for(TokenPair tokenPair : tokens) {
 				System.out.println("Token pair:");
-				System.out.println(token[0]);
-				System.out.println(token[1]);
+				System.out.println(tokenPair.getCookieToken());
+				System.out.println(tokenPair.getHeaderToken());
+				System.out.println(tokenPair.getId());
 			}
 			return tokens;
 		} catch (Exception e) {
@@ -60,7 +60,19 @@ public class TokenRepository extends MySQLRepository implements SQLRepository<St
 			return null;
 		}
 	}
+	
+	@Override
+	public <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) throws Exception {
+		try {
+			super.updateWhereEquals(clauseColumn, clauseValue, updateColumn, updateValue);
+			return true;
+		} catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 
+	
 	@Override
 	public Boolean closeConnection() throws Exception {
 		return super.closeConnection();
