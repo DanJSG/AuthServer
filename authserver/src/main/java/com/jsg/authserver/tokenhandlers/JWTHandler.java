@@ -15,7 +15,6 @@ public final class JWTHandler {
 	public static String createToken(long id, String secret, int expirySecs) {
 		Algorithm algorithm = Algorithm.HMAC256(secret);
 		int hash = Calendar.getInstance().getTime().hashCode();
-		System.out.println(hash);
 		String jwt = JWT.create()
 				.withIssuedAt(new Date())
 				.withExpiresAt(new Date((Calendar.getInstance().getTimeInMillis() * msSecond) + expirySecs))

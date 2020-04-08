@@ -49,11 +49,9 @@ public abstract class MySQLRepository {
 	
 	protected <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) throws Exception {
 		String query = "UPDATE courier.`" + tableName + "` SET " + updateColumn + "= ? WHERE " + clauseColumn + " = ?;";
-		System.out.println(query);
 		PreparedStatement statement = connection.prepareStatement(query);
 		statement.setObject(1, updateValue);
 		statement.setObject(2, clauseValue);
-		System.out.println(statement.toString());
 		statement.executeUpdate();
 		return true;
 	}

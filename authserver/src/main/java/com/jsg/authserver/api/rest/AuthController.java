@@ -30,7 +30,7 @@ import com.jsg.authserver.tokenhandlers.JWTHandler;
 @RestController
 @CrossOrigin(origins = "http://local.courier.net:3000")
 @RequestMapping("/api/auth")
-public class AuthController {
+public final class AuthController {
 	
 	private static final String refreshTokenCookieName = "ref.tok";
 	private static final String accessTokenCookieName = "acc.tok";
@@ -54,27 +54,17 @@ public class AuthController {
 	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<Boolean> authorize(@RequestBody Map<String, String> userLogin, HttpServletResponse response) throws Exception {
-		UserRepository userRepo = new UserRepository();
-		List<User> results = userRepo.findWhereEqual("email", userLogin.get("email"), 1);
-		if(results == null || results.size() < 1) {
+		User user = verifyCredentials(userLogin.get("email"), userLogin.get("password"));
+		if(user == null) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
 		}
-		User user = results.get(0);
-		if(!BCrypt.checkpw(new String(Base64.decode(userLogin.get("password"))), user.getPassword())) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
-		}
-		user.clearPassword();
 		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-		System.out.println(refreshToken);
-		System.out.println(xsrfRefreshToken);
 		TokenRepository tokenRepo = new TokenRepository();
-		// DB STUFF
 		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken))) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
 		}
 		tokenRepo.closeConnection();
-		// DB STUFF
 		response.addCookie(createAuthCookie(refreshTokenCookieName, refreshToken, refreshExpiryTime));
 		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfRefreshToken).body(true);
 	}
@@ -87,17 +77,12 @@ public class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		// DB STUFF
 		TokenRepository tokenRepo = new TokenRepository();
-		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
-		if(results == null || results.size() < 1) {
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
+		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		TokenPair tokenPair = results.get(0);
-		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		// DB STUFF
+		tokenRepo.closeConnection();
 		String accessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(cookieToken), accessSecret, accessExpiryTime);
 		String xsrfAccessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(headerToken), accessSecret, accessExpiryTime);
 		response.addCookie(createAuthCookie(accessTokenCookieName, accessToken, accessExpiryTime));
@@ -112,20 +97,42 @@ public class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		// TODO update refresh token validity in database
-		// DB STUFF
 		TokenRepository tokenRepo = new TokenRepository();
-		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
-		if(results == null || results.size() < 1) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		TokenPair tokenPair = results.get(0);
-		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
+		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
 		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
+		tokenRepo.closeConnection();
 		response.addCookie(deleteAuthCookie());
 		return ResponseEntity.status(HttpStatus.OK).body(true);
+	}
+	
+	private TokenPair verifyRefreshTokens(TokenRepository tokenRepo, String cookieToken, String headerToken) {
+		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
+		if(results == null || results.size() < 1) {
+			return null;
+		}
+		TokenPair tokenPair = results.get(0);
+		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
+			return null;
+		}
+		return tokenPair;
+	}
+	
+	private User verifyCredentials(String email, String password) throws Exception {
+		UserRepository userRepo = new UserRepository();
+		List<User> results = userRepo.findWhereEqual("email", email, 1);
+		userRepo.closeConnection();
+		if(results == null || results.size() < 1) {
+			return null;
+		}
+		User user = results.get(0);
+		if(!BCrypt.checkpw(new String(Base64.decode(password)), user.getPassword())) {
+			return null;
+		}
+		user.clearPassword();
+		return user;
 	}
 	
 	private Cookie createAuthCookie(String name, String value, int expires) {

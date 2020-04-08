@@ -10,7 +10,7 @@ import java.util.Map;
 
 import com.jsg.authserver.datatypes.TokenPair;
 
-public class TokenRepository extends MySQLRepository implements SQLRepository<TokenPair> {
+public final class TokenRepository extends MySQLRepository implements SQLRepository<TokenPair> {
 			
 	public TokenRepository() throws Exception {
 		super.tableName = "auth.tokens";
@@ -48,12 +48,6 @@ public class TokenRepository extends MySQLRepository implements SQLRepository<To
 			while(results.next()) {
 				tokens.add(new TokenPair(results.getString("tokenA"), results.getString("tokenB"), results.getLong("id")));
 			}
-			for(TokenPair tokenPair : tokens) {
-				System.out.println("Token pair:");
-				System.out.println(tokenPair.getCookieToken());
-				System.out.println(tokenPair.getHeaderToken());
-				System.out.println(tokenPair.getId());
-			}
 			return tokens;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -71,7 +65,6 @@ public class TokenRepository extends MySQLRepository implements SQLRepository<To
 			return false;
 		}
 	}
-
 	
 	@Override
 	public Boolean closeConnection() throws Exception {

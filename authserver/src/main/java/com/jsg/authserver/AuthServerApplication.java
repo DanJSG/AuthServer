@@ -12,6 +12,6 @@ public class AuthServerApplication {
 	
 	public static void main(String[] args) {
 		SpringApplication.run(AuthServerApplication.class, args);
-		System.out.println("This application is now running...");
+		System.out.println("JSG Auth Server started...");
 	}
 }
