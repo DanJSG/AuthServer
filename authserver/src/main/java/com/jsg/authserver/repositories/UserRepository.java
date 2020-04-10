@@ -10,8 +10,8 @@ import com.jsg.authserver.datatypes.User;
 
 public class UserRepository extends MySQLRepository implements SQLRepository<User> { 
 	
-	public UserRepository() throws Exception {
-		super.tableName = "users.accounts";
+	public UserRepository(String connectionString, String username, String password) throws Exception {
+		super(connectionString, username, password, "users.accounts");
 		super.openConnection();
 	}
 

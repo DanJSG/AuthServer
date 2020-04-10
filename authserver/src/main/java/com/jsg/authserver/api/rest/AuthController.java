@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bson.internal.Base64;
 import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,22 +36,31 @@ public final class AuthController {
 	
 	private static final String refreshTokenCookieName = "ref.tok";
 	private static final String accessTokenCookieName = "acc.tok";
-	private static final int accessExpiryTime = 900; // 15 minutes in seconds
-	private static final int refreshExpiryTime = 2419200; // 28 days in seconds
 	
-	private static final String refreshSecret = "L^a:fnQ(ZWe!t;d'qkDF}-M\"<?_2K&;zyw_$#ZwhZr4@<ssP.U"
-			+ "!h#FD[kQ@=JWNVZQjM#h>@kWxE(qH3yQ$k8}6P-yA=JN=ZLWA"
-			+ "d!M],zu2jm6Fr$LZ_,TarHjeu=Ar!Z53X<j_ueC/5d@psXbS8"
-			+ "vF@`uF{ap`hq_d9pBa})-Y3!5`mv55)p7`t~8!V4TS}xCS7rZ"
-			+ "&fc~bx:)<`k_D;CnJnmdQK]UjcZ'WGAT<W_w>/f3$}nNnd^G+"
-			+ "Lz(^F8*~%#";
+	private final int accessExpiryTime;
+	private final int refreshExpiryTime;
+	private final String refreshSecret;
+	private final String accessSecret;
+	private final String sqlUsername;
+	private final String sqlPassword;
+	private final String sqlConnectionString;
 	
-	private static final String accessSecret = "%Rw_-C8!tDMtAn3^^KZh7N&m6V+3jnQLmh5b55Xv%WZTS?DbQH_"
-			+ "Sgt+HLecK8$LXtTxbQZP+Fp@jgeAzeU*D9Yv$*bS66V2bct!X"
-			+ "Cq7t=Lm6#d@grZB5eAX$GbJFmbbG#FfJvBqAQ@JBH=NJnfpk5"
-			+ "XfVnq^7jDNmtM8^$%2dxPv^?Jb$B6MuP?BQ=4Mm596_%-=fmm"
-			+ "AAZd56kMp@^C6^r?TjCkG4V8CeRV@z5=mFNbjaGDJMVUFPPHA"
-			+ "wua8*A_BD";;
+	@Autowired
+	public AuthController(@Value("${accessTokenExpiryTime}") int accessTokenExpiryTime,
+							@Value("${refreshTokenExpiryTime}") int refreshTokenExpiryTime,
+							@Value("${refreshTokenSecret}") String refreshTokenSecret,
+							@Value("${accessTokenSecret}") String accessTokenSecret,
+							@Value("${sqlUsername}") String sqlUsername,
+							@Value("${sqlPassword}") String sqlPassword,
+							@Value("${sqlConnectionString}") String sqlConnectionString) {
+		this.accessExpiryTime = accessTokenExpiryTime;
+		this.accessSecret = accessTokenSecret;
+		this.refreshExpiryTime = refreshTokenExpiryTime;
+		this.refreshSecret = refreshTokenSecret;
+		this.sqlConnectionString = sqlConnectionString;
+		this.sqlUsername = sqlUsername;
+		this.sqlPassword = sqlPassword;
+	}
 	
 	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -60,8 +71,8 @@ public final class AuthController {
 		}
 		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-		TokenRepository tokenRepo = new TokenRepository();
-		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken))) {
+		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken, false))) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
 		}
 		tokenRepo.closeConnection();
@@ -77,7 +88,7 @@ public final class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		TokenRepository tokenRepo = new TokenRepository();
+		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
@@ -97,14 +108,15 @@ public final class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		TokenRepository tokenRepo = new TokenRepository();
+		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
 		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
 		tokenRepo.closeConnection();
-		response.addCookie(deleteAuthCookie());
+		response.addCookie(createAuthCookie(refreshTokenCookieName, "", -1));
+		response.addCookie(createAuthCookie(accessTokenCookieName, "", -1));
 		return ResponseEntity.status(HttpStatus.OK).body(true);
 	}
 	
@@ -114,6 +126,9 @@ public final class AuthController {
 			return null;
 		}
 		TokenPair tokenPair = results.get(0);
+		if(tokenPair.isExpired()) {
+			return null;
+		}
 		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
 			return null;
 		}
@@ -121,7 +136,7 @@ public final class AuthController {
 	}
 	
 	private User verifyCredentials(String email, String password) throws Exception {
-		UserRepository userRepo = new UserRepository();
+		UserRepository userRepo = new UserRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		List<User> results = userRepo.findWhereEqual("email", email, 1);
 		userRepo.closeConnection();
 		if(results == null || results.size() < 1) {
@@ -140,12 +155,6 @@ public final class AuthController {
 		cookie.setMaxAge(expires);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
-		return cookie;
-	}
-	
-	private Cookie deleteAuthCookie() {
-		Cookie cookie = new Cookie(refreshTokenCookieName, "");
-		cookie.setMaxAge(0);
 		return cookie;
 	}
 	

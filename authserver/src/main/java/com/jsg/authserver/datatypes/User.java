@@ -10,12 +10,8 @@ public class User {
 	@JsonProperty
 	private String email;
 	
-	@JsonProperty
 	private String password;
-	
-	@JsonProperty
-	private String salt;
-	
+		
 	public User() {}
 	
 	public User(String email, String password) {
@@ -43,7 +39,6 @@ public class User {
 	
 	public void clearPassword() {
 		this.password = null;
-		this.salt = null;
 	}
 	
 }

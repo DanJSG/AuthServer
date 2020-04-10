@@ -12,8 +12,8 @@ import com.jsg.authserver.datatypes.TokenPair;
 
 public final class TokenRepository extends MySQLRepository implements SQLRepository<TokenPair> {
 			
-	public TokenRepository() throws Exception {
-		super.tableName = "auth.tokens";
+	public TokenRepository(String connectionString, String username, String password) throws Exception {
+		super(connectionString, username, password, "auth.tokens");
 		super.openConnection();
 	}
 	
@@ -46,7 +46,7 @@ public final class TokenRepository extends MySQLRepository implements SQLReposit
 			ResultSet results = super.findWhereEquals(searchColumn, value, "*", limit);
 			ArrayList<TokenPair> tokens = new ArrayList<>();
 			while(results.next()) {
-				tokens.add(new TokenPair(results.getString("tokenA"), results.getString("tokenB"), results.getLong("id")));
+				tokens.add(new TokenPair(results.getString("tokenA"), results.getString("tokenB"), results.getLong("id"), results.getBoolean("expired")));
 			}
 			return tokens;
 		} catch (Exception e) {

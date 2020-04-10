@@ -8,14 +8,17 @@ public class TokenPair {
 	
 	private long id;
 	
-	public TokenPair(String cookieToken, String headerToken, long id) {
+	private Boolean isExpired;
+	
+	public TokenPair(String cookieToken, String headerToken, long id, Boolean isExpired) {
 		this.cookieToken = cookieToken;
 		this.headerToken = headerToken;
 		this.id = id;
+		this.isExpired = isExpired;
 	}
 	
-	public TokenPair(String cookieToken, String headerToken) {
-		this(cookieToken, headerToken, -1);
+	public TokenPair(String cookieToken, String headerToken, Boolean isExpired) {
+		this(cookieToken, headerToken, -1, isExpired);
 	}
 	
 	public String getCookieToken() {
@@ -28,6 +31,10 @@ public class TokenPair {
 	
 	public long getId() {
 		return id;
+	}
+	
+	public Boolean isExpired() {
+		return isExpired;
 	}
 	
 }

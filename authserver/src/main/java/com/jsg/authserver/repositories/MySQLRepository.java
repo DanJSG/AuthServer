@@ -9,14 +9,25 @@ import java.util.Properties;
 
 public abstract class MySQLRepository {
 
-	protected String tableName;
+	private String tableName;
 	private Connection connection;
+	
+	private final String connectionString;
+	private final String sqlUsername;
+	private final String sqlPassword;
+	
+	protected MySQLRepository(String connectionString, String username, String password, String tableName) {
+		this.connectionString = connectionString;
+		this.sqlUsername = username;
+		this.sqlPassword = password;
+		this.tableName = tableName;
+	}
 	
 	protected void openConnection() throws Exception {
 		Properties properties = new Properties();
-		properties.put("user", "localDev");
-		properties.put("password", "l0c4l_d3v!");
-		connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/courier?serverTimezone=UTC", properties);
+		properties.put("user", sqlUsername);
+		properties.put("password", sqlPassword);
+		connection = DriverManager.getConnection(connectionString, properties);
 	}
 	
 	protected Boolean closeConnection() throws Exception {
