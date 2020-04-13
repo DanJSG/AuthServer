@@ -1,7 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
 
-//http://localhost:3000/sign-in?audience=courier&scope=sub+name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
+//http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
 
 function LoginPage() {
 
@@ -31,14 +31,30 @@ function LoginPage() {
     }
 
     const sendLoginRequest = (email, password) => {
-        setAuthCode(200);
-        // send email, password and code challenge to auth server
-        // SERVER SIDE STUFF:
-        //      if email and password match, generate authorization code
-        //      store authorization code with code challenge in DB (short expiry)
-        //      return authorization code to client
-        // receive authorization code 
-        // set authorization code and redirect to redirect uri
+        const url = `http://local.courier.net:8080/api/auth/authorize?code_challenge=${params.code_challenge}&response_type=${params.response_type}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}`;
+        const credentials = JSON.stringify({credentials: btoa(JSON.stringify({email: email, password: password}))})
+        fetch(url, {
+            method: "POST",
+            body: credentials,
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then((response) => {
+            if(response.status !== 200) {
+                console.log(`Request failed. Returned status code ${response.status}. Response object logged below.`);
+                console.log(response);
+                return;
+            }
+            return response.json();
+        })
+        .then((json) => {
+            console.log("Auth code is: " + json.code);
+            setAuthCode(json.code);
+        })
+        .catch((error) => {
+            console.log(`Fetch error: ${error}`);
+        })
     }
 
     const handleLogin = (e) => {
@@ -52,7 +68,7 @@ function LoginPage() {
     }
 
     const redirectToCallback = () => {
-        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${params.state}`
+        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${params.state}`;
     }
 
     return(

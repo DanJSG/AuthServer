@@ -1,12 +1,12 @@
 package com.jsg.authserver.api.rest;
 
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import org.bson.internal.Base64;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.repositories.TokenRepository;
@@ -33,6 +36,8 @@ import com.jsg.authserver.tokenhandlers.JWTHandler;
 @CrossOrigin(origins = "http://local.courier.net:3000")
 @RequestMapping("/api/auth")
 public final class AuthController {
+	
+	private static final String ALPHA_NUM_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	
 	private static final String refreshTokenCookieName = "ref.tok";
 	private static final String accessTokenCookieName = "acc.tok";
@@ -62,22 +67,29 @@ public final class AuthController {
 		this.sqlPassword = sqlPassword;
 	}
 	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
+	@CrossOrigin(origins = "http://local.courier.net:3000/*")
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<Boolean> authorize(@RequestBody Map<String, String> userLogin, HttpServletResponse response) throws Exception {
-		User user = verifyCredentials(userLogin.get("email"), userLogin.get("password"));
+	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body, @RequestParam String code_challenge, 
+			@RequestParam String response_type, @RequestParam String redirect_uri,
+			@RequestParam String client_id, HttpServletResponse response) throws Exception {
+		LoginCredentials credentials = new LoginCredentials(body);
+		User user = verifyCredentials(credentials.getEmail(), credentials.getPassword());
 		if(user == null) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
-		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken, false))) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-		}
-		tokenRepo.closeConnection();
-		response.addCookie(createAuthCookie(refreshTokenCookieName, refreshToken, refreshExpiryTime));
-		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfRefreshToken).body(true);
+		String authCode = generateSecureRandomString(24);
+		// TODO - Add code to store auth code wiht to client ID and code challenge
+		// TODO - Add code to verify redirect URI is registered with client ID
+		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode).toString());
+//		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
+//		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
+//		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
+//		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken, false))) {
+//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+//		}
+//		tokenRepo.closeConnection();
+//		response.addCookie(createAuthCookie(refreshTokenCookieName, refreshToken, refreshExpiryTime));
+//		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfRefreshToken).body(true);
 	}
 	
 	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
@@ -120,6 +132,15 @@ public final class AuthController {
 		return ResponseEntity.status(HttpStatus.OK).body(true);
 	}
 	
+	private String generateSecureRandomString(int length) {
+		SecureRandom randomProvider = new SecureRandom();
+		StringBuilder stringBuilder = new StringBuilder();
+		for(int i=0; i < length; i++) {
+			stringBuilder.append(ALPHA_NUM_CHARS.charAt(randomProvider.nextInt(ALPHA_NUM_CHARS.length())));
+		}
+		return stringBuilder.toString();
+	}
+	
 	private TokenPair verifyRefreshTokens(TokenRepository tokenRepo, String cookieToken, String headerToken) {
 		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
 		if(results == null || results.size() < 1) {
@@ -143,7 +164,7 @@ public final class AuthController {
 			return null;
 		}
 		User user = results.get(0);
-		if(!BCrypt.checkpw(new String(Base64.decode(password)), user.getPassword())) {
+		if(!BCrypt.checkpw(password, user.getPassword())) {
 			return null;
 		}
 		user.clearPassword();

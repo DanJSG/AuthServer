@@ -7,7 +7,7 @@ function App() {
   return (
     <Router>
       <Switch>
-        <Route exact path="/sign-in">
+        <Route exact path="/authorize">
           <LoginPage></LoginPage>
         </Route>
       </Switch>
