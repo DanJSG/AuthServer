@@ -1,11 +1,13 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Link, useLocation} from 'react-router-dom'
+import '../stylesheets/LoginPage.css'
 
 //http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
 
 function LoginPage() {
 
     const location = useLocation();
+    const [rememberMe, setRememberMe] = useState(false);
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
     const [params] = useState(() => {
@@ -44,6 +46,7 @@ function LoginPage() {
             if(response.status !== 200) {
                 console.log(`Request failed. Returned status code ${response.status}. Response object logged below.`);
                 console.log(response);
+                setFormError("The email address and password combination you have entered is incorrect.");
                 return;
             }
             return response.json();
@@ -71,25 +74,39 @@ function LoginPage() {
         window.location.href = `${params.redirect_uri}?code=${authCode}&state=${params.state}`;
     }
 
+    useEffect(() => console.log("Remember me checkbox is " + rememberMe), [rememberMe]);
+
+    const toggleRememberMe = () => {
+        setRememberMe(!rememberMe);
+    }
+
     return(
-        <div>
-            {authCode === null ? 
-                <form onSubmit={handleLogin}>
-                    Email: &nbsp;
-                    <input type="email" name="email"></input>
-                    <br/>
-                    Password: &nbsp;
-                    <input type="password" name="password"></input>
-                    <br/>
-                    <button>Sign In</button>
-                    <br/>
-                    {formError && formError}
-                    <br/>
-                    Not got an account yet? <Link to="/sign-up">Sign up here.</Link>
-                </form>
-                :
-                redirectToCallback()
-            }
+        <div className="container-fluid inherit-height">
+            <div className="row align-items-center justify-content-center inherit-height">
+                <div className="col-3">
+                    {authCode === null ? 
+                        <form onSubmit={handleLogin}>
+                            <div className="form-group">
+                                <input className="form-control" type="email" name="email" placeholder="Email address"></input>
+                            </div>
+                            <div className="form-group">
+                                <input className="form-control" type="password" name="password" placeholder="Password"></input>
+                            </div>
+                            {formError && <label className="form-text" htmlFor="signInButton">{formError}</label>}
+                            <div className="form-group">
+                                <button id="signInButton" className="btn btn-primary">Sign In</button>
+                            </div>
+                            <div className="form-group">
+                            <label className="form-text">
+                                Not got an account yet? <Link className="link" to="/sign-up">Sign up here.</Link>
+                            </label>
+                            </div>
+                        </form>
+                        :
+                        redirectToCallback()
+                    }
+                </div>
+            </div>
         </div>
     );
 }
