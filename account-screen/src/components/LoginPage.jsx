@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
 import '../stylesheets/LoginPage.css'
 
@@ -7,7 +7,6 @@ import '../stylesheets/LoginPage.css'
 function LoginPage() {
 
     const location = useLocation();
-    const [rememberMe, setRememberMe] = useState(false);
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
     const [params] = useState(() => {
@@ -72,12 +71,6 @@ function LoginPage() {
 
     const redirectToCallback = () => {
         window.location.href = `${params.redirect_uri}?code=${authCode}&state=${params.state}`;
-    }
-
-    useEffect(() => console.log("Remember me checkbox is " + rememberMe), [rememberMe]);
-
-    const toggleRememberMe = () => {
-        setRememberMe(!rememberMe);
     }
 
     return(
