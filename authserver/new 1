@@ -1,0 +1,43 @@
+OAuth2 Authorization Code Flow:
+
+	Front end generates random hash.
+	
+	Front-end redirects to Authorization URL with random hash. This looks something like this:
+	
+		https://authorization.domain/authorize?
+										audience=API_unique_id&
+										scope=sub+name+email+offline_access&
+										response_type=code&
+										client_id=<unique identifier for courier>&
+										state=<random value to protect against CSRF>&
+										redirect_uri=https://application.domain
+	
+	They will then be redirected to URL looking something like this:
+	
+		https://authorization.domain/auth-callback?
+										code=<authorization-code>&
+										state=<same random value as in original request>
+										
+	A request is then made for for an access token, with the following parameters:
+	
+		grant_type=authorization_code
+		code=<returned authorization code>
+		redirect_uri=https://application.domain
+		client_id=<application ID>
+		client_secret=<unique secret for the client>
+		
+	The authentication server then returns the following:
+	
+		{
+			"access_token": <ACCESS TOKEN>,
+			"token_type": "Bearer",
+			"expires_in": <expiry time>,
+			"refresh_token": <REFRESH TOKEN>,
+			"scope": "sub name email offline_access"
+		}
+	
+So to configure a OAuth2 Authorization Code Flow compatible server:
+
+	Front-end page with a login form (React)
+	Server-side handles password verification against database
+	Generates authorization code 
