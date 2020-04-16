@@ -10,9 +10,9 @@ import java.util.Map;
 
 import com.jsg.authserver.datatypes.TokenPair;
 
-public final class TokenRepository extends MySQLRepository implements SQLRepository<TokenPair> {
+public final class TokenPairRepository extends MySQLRepository implements SQLRepository<TokenPair> {
 			
-	public TokenRepository(String connectionString, String username, String password) throws Exception {
+	public TokenPairRepository(String connectionString, String username, String password) throws Exception {
 		super(connectionString, username, password, "auth.tokens");
 		super.openConnection();
 	}

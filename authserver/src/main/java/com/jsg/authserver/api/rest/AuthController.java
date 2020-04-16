@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.User;
-import com.jsg.authserver.repositories.TokenRepository;
+import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.repositories.UserRepository;
 import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
@@ -78,8 +78,8 @@ public final class AuthController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
 		String authCode = generateSecureRandomString(24);
-		// TODO - Add code to store auth code wiht to client ID and code challenge
 		// TODO - Add code to verify redirect URI is registered with client ID
+		// TODO - Add code to store auth code wiht to client ID and code challenge
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode).toString());
 //		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 //		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
@@ -100,7 +100,7 @@ public final class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
@@ -120,7 +120,7 @@ public final class AuthController {
 		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
@@ -141,7 +141,7 @@ public final class AuthController {
 		return stringBuilder.toString();
 	}
 	
-	private TokenPair verifyRefreshTokens(TokenRepository tokenRepo, String cookieToken, String headerToken) {
+	private TokenPair verifyRefreshTokens(TokenPairRepository tokenRepo, String cookieToken, String headerToken) {
 		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
 		if(results == null || results.size() < 1) {
 			return null;
