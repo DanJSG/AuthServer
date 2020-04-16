@@ -1,0 +1,11 @@
+//custom things go here (rules, colours etc.)
+
+.inherit-height {
+    height: inherit;
+}
+
+.input-hover:hover {
+    background-color: hsl(0, 0%, 96%);
+}
+
+@import '~bootstrap/scss/bootstrap.scss'

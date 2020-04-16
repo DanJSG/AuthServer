@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
-import '../stylesheets/LoginPage.css'
+// import '../stylesheets/LoginPage.css'
 
 //http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
 
@@ -51,6 +51,9 @@ function LoginPage() {
             return response.json();
         })
         .then((json) => {
+            if(!json) {
+                return;
+            }
             console.log("Auth code is: " + json.code);
             setAuthCode(json.code);
         })
@@ -78,23 +81,26 @@ function LoginPage() {
             <div className="row align-items-center justify-content-center inherit-height">
                 <div className="col-3">
                     {authCode === null ? 
-                        <form onSubmit={handleLogin}>
-                            <div className="form-group">
-                                <input className="form-control" type="email" name="email" placeholder="Email address"></input>
-                            </div>
-                            <div className="form-group">
-                                <input className="form-control" type="password" name="password" placeholder="Password"></input>
-                            </div>
-                            {formError && <label className="form-text" htmlFor="signInButton">{formError}</label>}
-                            <div className="form-group">
-                                <button id="signInButton" className="btn btn-primary">Sign In</button>
-                            </div>
-                            <div className="form-group">
-                            <label className="form-text">
-                                Not got an account yet? <Link className="link" to="/sign-up">Sign up here.</Link>
-                            </label>
-                            </div>
-                        </form>
+                        <div>
+                            <h1 className="mb-4">Sign In</h1>
+                            <form onSubmit={handleLogin}>
+                                <div className="form-group">
+                                    <input className="form-control input-hover" type="email" name="email" placeholder="Email address"></input>
+                                </div>
+                                <div className="form-group">
+                                    <input className="form-control input-hover" type="password" name="password" placeholder="Password"></input>
+                                    {formError && <label className="form-text">{formError}</label>}
+                                </div>
+                                <div className="form-group">
+                                    <button id="signInButton" className="btn btn-primary">Sign In</button>
+                                </div>
+                                <div className="form-group">
+                                <label className="form-text">
+                                    Not got an account yet? <Link className="link text-decoration-none" to="/sign-up">Sign up here.</Link>
+                                </label>
+                                </div>
+                            </form>
+                        </div>
                         :
                         redirectToCallback()
                     }
