@@ -17,4 +17,22 @@ public class CodeChallenge {
 		this.expires = new Date(calendar.getTimeInMillis());
 	}
 	
+	public CodeChallenge(String clientId, String codeChallenge, Date expires) {
+		this.clientId = clientId;
+		this.codeChallenge = codeChallenge;
+		this.expires = expires;
+	}
+	
+	public String getClientId() {
+		return this.clientId;
+	}
+	
+	public String getCodeChallenge() {
+		return this.codeChallenge;
+	}
+	
+	public Date getExpiryDateTime() {
+		return this.expires;
+	}
+	
 }

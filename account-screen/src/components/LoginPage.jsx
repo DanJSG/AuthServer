@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
 // import '../stylesheets/LoginPage.css'
 
-//http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
+//http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net:3000/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
 
 function LoginPage() {
 

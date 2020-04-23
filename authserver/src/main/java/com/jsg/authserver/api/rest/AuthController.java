@@ -24,9 +24,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.datatypes.AppAuthRecord;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.User;
+import com.jsg.authserver.repositories.AppAuthRecordRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.repositories.UserRepository;
 import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
@@ -78,8 +80,19 @@ public final class AuthController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
 		String authCode = generateSecureRandomString(24);
-		// TODO - Add code to verify redirect URI is registered with client ID
-		// TODO - Add code to store auth code wiht to client ID and code challenge
+		// TODO REFACTOR ALL OF THIS STUFF
+		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
+		if(appList.size() < 1) {
+			return null;
+		}
+		AppAuthRecord app = appList.get(0);
+		if(!app.getRedirectUri().contentEquals(redirect_uri)) {
+			return null;
+		}
+		// TODO - Add code to store auth code with to client ID and code challenge
+		// TODO - Add state column to database, save state with auth code, 16 char secure string
+		
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode).toString());
 //		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 //		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);

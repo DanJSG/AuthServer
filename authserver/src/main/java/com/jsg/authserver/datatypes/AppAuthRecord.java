@@ -16,4 +16,16 @@ public class AppAuthRecord {
 		this(clientId, redirectUri, null);
 	}
 	
+	public String getClientId() {
+		return this.clientId;
+	}
+	
+	public String getRedirectUri() {
+		return this.redirectUri;
+	}
+	
+	public String getClientSecret() {
+		return this.clientSecret;
+	}
+	
 }
