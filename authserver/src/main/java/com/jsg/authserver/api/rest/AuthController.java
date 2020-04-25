@@ -25,10 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
+import com.jsg.authserver.datatypes.AuthCode;
+import com.jsg.authserver.datatypes.CodeChallenge;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.repositories.AppAuthRecordRepository;
+import com.jsg.authserver.repositories.AuthCodeRepository;
+import com.jsg.authserver.repositories.CodeChallengeRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.repositories.UserRepository;
 import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
@@ -71,7 +75,8 @@ public final class AuthController {
 	
 	@CrossOrigin(origins = "http://local.courier.net:3000/*")
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body, @RequestParam String code_challenge, 
+	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body,
+			@RequestParam String code_challenge, @RequestParam String state, 
 			@RequestParam String response_type, @RequestParam String redirect_uri,
 			@RequestParam String client_id, HttpServletResponse response) throws Exception {
 		LoginCredentials credentials = new LoginCredentials(body);
@@ -79,11 +84,11 @@ public final class AuthController {
 		if(user == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
-		String authCode = generateSecureRandomString(24);
 		// TODO REFACTOR ALL OF THIS STUFF
 		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
-		if(appList.size() < 1) {
+		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, 1);
+		appRepo.closeConnection();
+		if(appList == null || appList.size() < 1) {
 			return null;
 		}
 		AppAuthRecord app = appList.get(0);
@@ -92,8 +97,21 @@ public final class AuthController {
 		}
 		// TODO - Add code to store auth code with to client ID and code challenge
 		// TODO - Add state column to database, save state with auth code, 16 char secure string
-		
-		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode).toString());
+		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
+		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		if(!challengeRepo.save(challenge)) {
+			challengeRepo.closeConnection();
+			return null;
+		}
+		challengeRepo.closeConnection();
+		AuthCode authCode = new AuthCode(client_id, generateSecureRandomString(24));
+		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		if(!authRepo.save(authCode)) {
+			authRepo.closeConnection();
+			return null;
+		}
+		authRepo.closeConnection();
+		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
 //		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 //		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
 //		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
@@ -115,10 +133,10 @@ public final class AuthController {
 		}
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
+		tokenRepo.closeConnection();
 		if(tokenPair == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
-		tokenRepo.closeConnection();
 		String accessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(cookieToken), accessSecret, accessExpiryTime);
 		String xsrfAccessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(headerToken), accessSecret, accessExpiryTime);
 		response.addCookie(createAuthCookie(accessTokenCookieName, accessToken, accessExpiryTime));
@@ -136,6 +154,7 @@ public final class AuthController {
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 		if(tokenPair == null) {
+			tokenRepo.closeConnection();
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 		}
 		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);

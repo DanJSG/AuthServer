@@ -1,9 +1,11 @@
 import React from 'react';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 import LoginPage from './components/LoginPage';
-// import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
-// import './App.css';
 import './stylesheets/BootstrapCustom.scss';
+// import {generateCodeChallenge, generateState} from './components/codeGen'
+
+// console.log(generateCodeChallenge());
+// console.log(generateState());
 
 function App() {
   return (

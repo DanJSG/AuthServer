@@ -1,9 +1,12 @@
 package com.jsg.authserver.repositories;
 
 import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.jsg.authserver.datatypes.AuthCode;
@@ -44,7 +47,7 @@ public class AuthCodeRepository extends MySQLRepository implements SQLRepository
 				authCodes.add(new AuthCode(
 						results.getString("client_id"),
 						results.getString("code"),
-						results.getDate("expires")));
+						LocalDateTime.parse(results.getString("expires"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.UK))));
 			}
 			if(authCodes.size() == 0) {
 				return null;

@@ -1,16 +1,19 @@
 package com.jsg.authserver.repositories;
 
 import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.jsg.authserver.datatypes.CodeChallenge;
 
 public class CodeChallengeRepository extends MySQLRepository implements SQLRepository<CodeChallenge>{
 
-	protected CodeChallengeRepository(String connectionString, String username, String password) throws Exception {
+	public CodeChallengeRepository(String connectionString, String username, String password) throws Exception {
 		super(connectionString, username, password, "auth.challenge");
 		super.openConnection();
 	}
@@ -20,6 +23,7 @@ public class CodeChallengeRepository extends MySQLRepository implements SQLRepos
 		Map<String, Object> valueMap = new HashMap<>();
 		valueMap.put("client_id", item.getClientId());
 		valueMap.put("code_challenge", item.getCodeChallenge());
+		valueMap.put("state", item.getState());
 		valueMap.put("expires", item.getExpiryDateTime());
 		try {
 			super.save(valueMap);
@@ -44,8 +48,9 @@ public class CodeChallengeRepository extends MySQLRepository implements SQLRepos
 				authCodes.add(new CodeChallenge(
 						results.getString("client_id"),
 						results.getString("code_challenge"),
-						results.getDate("expires")));
-			}
+						results.getString("state"),
+						LocalDateTime.parse(results.getString("expires"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.UK))));
+			} 
 			if(authCodes.size() == 0) {
 				return null;
 			}

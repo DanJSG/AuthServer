@@ -1,8 +1,10 @@
 import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
+import {generateCodeChallenge, generateState} from './codeGen'
 // import '../stylesheets/LoginPage.css'
 
-//http://localhost:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=h43dx4f&state=53243231&redirect_uri=https://local.courier.net:3000/auth_callback&code_challenge=3yct34hroa8fh4n8chfn84hacoxe8wfco8he74ajdory3ow8coa8du8WYNCQO8YWO8qonthc34oon8
+// http://local.courier.net:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=https:%2F%2Flocal.courier.net:3000%2Fauth_callback
+// http://local.courier.net:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=https://local.courier.net:3000/auth_callback
 
 function LoginPage() {
 
@@ -18,6 +20,8 @@ function LoginPage() {
         })
         return newParams;
     });
+    const state = generateState();
+    const codeChallenge = generateCodeChallenge();
 
     const checkForm = (email, password) => {
         if(email === undefined || email === null || email === "") {
@@ -32,7 +36,9 @@ function LoginPage() {
     }
 
     const sendLoginRequest = (email, password) => {
-        const url = `http://local.courier.net:8080/api/auth/authorize?code_challenge=${params.code_challenge}&response_type=${params.response_type}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}`;
+        console.log(state);
+        console.log(codeChallenge.code_challenge);
+        const url = `http://local.courier.net:8080/api/auth/authorize?code_challenge=${codeChallenge.code_challenge}&response_type=${params.response_type}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&state=${state}`;
         const credentials = JSON.stringify({credentials: btoa(JSON.stringify({email: email, password: password}))})
         fetch(url, {
             method: "POST",
@@ -73,7 +79,9 @@ function LoginPage() {
     }
 
     const redirectToCallback = () => {
-        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${params.state}`;
+        // const uriString = `${params.redirect_uri}?code=${authCode}&state=${state}`;
+        // console.log(uriString);
+        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${state}`;
     }
 
     return(

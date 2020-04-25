@@ -1,25 +1,26 @@
 package com.jsg.authserver.datatypes;
 
-import java.sql.Date;
-import java.util.Calendar;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 public class CodeChallenge {
 	
 	private String clientId;
 	private String codeChallenge;
-	private Date expires;
+	private String state;
+	private LocalDateTime expires;
 	
-	public CodeChallenge(String clientId, String codeChallenge) {
+	public CodeChallenge(String clientId, String codeChallenge, String state) {
 		this.clientId = clientId;
 		this.codeChallenge = codeChallenge;
-		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.MINUTE, 1);
-		this.expires = new Date(calendar.getTimeInMillis());
+		this.state = state;
+		this.expires = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(1);
 	}
 	
-	public CodeChallenge(String clientId, String codeChallenge, Date expires) {
+	public CodeChallenge(String clientId, String codeChallenge, String state, LocalDateTime expires) {
 		this.clientId = clientId;
 		this.codeChallenge = codeChallenge;
+		this.state = state;
 		this.expires = expires;
 	}
 	
@@ -31,7 +32,11 @@ public class CodeChallenge {
 		return this.codeChallenge;
 	}
 	
-	public Date getExpiryDateTime() {
+	public String getState() {
+		return this.state;
+	}
+	
+	public LocalDateTime getExpiryDateTime() {
 		return this.expires;
 	}
 	
