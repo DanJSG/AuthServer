@@ -1,12 +1,9 @@
 package com.jsg.authserver.repositories;
 
 import java.sql.ResultSet;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import com.jsg.authserver.datatypes.CodeChallenge;
@@ -49,7 +46,7 @@ public class CodeChallengeRepository extends MySQLRepository implements SQLRepos
 						results.getString("client_id"),
 						results.getString("code_challenge"),
 						results.getString("state"),
-						LocalDateTime.parse(results.getString("expires"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.UK))));
+						results.getTimestamp("expires")));
 			} 
 			if(authCodes.size() == 0) {
 				return null;

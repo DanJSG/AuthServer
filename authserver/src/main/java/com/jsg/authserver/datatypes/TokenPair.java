@@ -3,11 +3,8 @@ package com.jsg.authserver.datatypes;
 public class TokenPair {
 	
 	private String cookieToken;
-	
 	private String headerToken;
-	
 	private long id;
-	
 	private Boolean isExpired;
 	
 	public TokenPair(String cookieToken, String headerToken, long id, Boolean isExpired) {

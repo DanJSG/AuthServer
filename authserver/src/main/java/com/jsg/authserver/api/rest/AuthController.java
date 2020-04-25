@@ -1,8 +1,12 @@
 package com.jsg.authserver.api.rest;
 
 import java.security.SecureRandom;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -13,17 +17,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
 import com.jsg.authserver.datatypes.AppAuthRecord;
 import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
@@ -35,7 +39,6 @@ import com.jsg.authserver.repositories.AuthCodeRepository;
 import com.jsg.authserver.repositories.CodeChallengeRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.repositories.UserRepository;
-import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
@@ -44,6 +47,9 @@ import com.jsg.authserver.tokenhandlers.JWTHandler;
 public final class AuthController {
 	
 	private static final String ALPHA_NUM_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	
+	private static final String AUTH_CODE_GRANT_TYPE = "authorization_code"; 
+	private static final String REFRESH_TOKEN_GRANT_TYPE = "refresh_token";
 	
 	private static final String refreshTokenCookieName = "ref.tok";
 	private static final String accessTokenCookieName = "acc.tok";
@@ -81,88 +87,113 @@ public final class AuthController {
 			@RequestParam String client_id, HttpServletResponse response) throws Exception {
 		LoginCredentials credentials = new LoginCredentials(body);
 		User user = verifyCredentials(credentials.getEmail(), credentials.getPassword());
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
 		if(user == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+			return unauthorizedResponse;
 		}
-		// TODO REFACTOR ALL OF THIS STUFF
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, 1);
-		appRepo.closeConnection();
-		if(appList == null || appList.size() < 1) {
-			return null;
+		if(!verifyAppAuthRecord(client_id, redirect_uri)) {
+			return unauthorizedResponse;
 		}
-		AppAuthRecord app = appList.get(0);
-		if(!app.getRedirectUri().contentEquals(redirect_uri)) {
-			return null;
+		if(!saveCodeChallenge(client_id, code_challenge, state)) {
+			return unauthorizedResponse;
 		}
-		// TODO - Add code to store auth code with to client ID and code challenge
-		// TODO - Add state column to database, save state with auth code, 16 char secure string
-		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		if(!challengeRepo.save(challenge)) {
-			challengeRepo.closeConnection();
-			return null;
+		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
+		if(!saveAuthCode(client_id, authCode)) {
+			return unauthorizedResponse;
 		}
-		challengeRepo.closeConnection();
-		AuthCode authCode = new AuthCode(client_id, generateSecureRandomString(24));
-		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		if(!authRepo.save(authCode)) {
-			authRepo.closeConnection();
-			return null;
-		}
-		authRepo.closeConnection();
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
-//		String refreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-//		String xsrfRefreshToken = JWTHandler.createToken(user.getId(), refreshSecret, refreshExpiryTime);
-//		TokenRepository tokenRepo = new TokenRepository(sqlConnectionString, sqlUsername, sqlPassword);
-//		if(!tokenRepo.save(new TokenPair(refreshToken, xsrfRefreshToken, false))) {
-//			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+	}
+	
+	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
+	@PostMapping(value = "/token")
+	public @ResponseBody ResponseEntity<String> token(@RequestParam String code, @RequestParam String state,
+			@RequestParam String client_id, @RequestParam String redirect_uri, @RequestParam String grant_type,
+			@RequestParam String code_verifier, HttpServletResponse response) throws Exception {
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
+		switch(grant_type) {
+			case AUTH_CODE_GRANT_TYPE:
+				return getTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
+			case REFRESH_TOKEN_GRANT_TYPE:
+				// call method
+				break;
+			default:
+				return unauthorizedResponse;
+		}
+		return null;
+		
+	}
+	
+	private ResponseEntity<String> getTokenWithAuthCode(String code, String state, String client_id, String redirect_uri,
+			String code_verifier, HttpServletResponse response) throws Exception {
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
+		if(!verifyAppAuthRecord(client_id, redirect_uri)) {
+			System.out.println("Problem finding app registration");
+			return unauthorizedResponse;
+		}
+		AuthCode authCode = this.verifyAuthCode(client_id, code);
+		if(authCode == null) {
+			System.out.println("Problem with Auth Code");
+			return unauthorizedResponse;
+		}
+		if(!verifyCodeChallenge(client_id, code_verifier, state)) {
+			System.out.println("Problem with code challenge");
+			return unauthorizedResponse;
+		}
+		String cookieToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
+		String headerToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
+		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		Boolean areTokensSaved = tokenRepo.save(new TokenPair(cookieToken, headerToken, false));
+		tokenRepo.closeConnection();
+		if(!areTokensSaved) {
+			System.out.println("Problem saving tokens");
+			return unauthorizedResponse;
+		}
+		response.addCookie(createAuthCookie(refreshTokenCookieName, cookieToken, refreshExpiryTime));
+		Map<String, String> responseBody = new HashMap<>();
+		responseBody.put("token", headerToken);
+		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
+	}
+	
+//	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
+//	@PostMapping(value = "/refresh")
+//	public @ResponseBody ResponseEntity<Boolean> refresh(@CookieValue(name = refreshTokenCookieName, required = false) String cookieToken,
+//			@RequestHeader String authorization, HttpServletResponse response) throws Exception {
+//		String headerToken = AuthHeaderHandler.getBearerToken(authorization);
+//		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
 //		}
+//		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+//		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
 //		tokenRepo.closeConnection();
-//		response.addCookie(createAuthCookie(refreshTokenCookieName, refreshToken, refreshExpiryTime));
-//		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfRefreshToken).body(true);
-	}
-	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
-	@PostMapping(value = "/refresh")
-	public @ResponseBody ResponseEntity<Boolean> refresh(@CookieValue(name = refreshTokenCookieName, required = false) String cookieToken,
-			@RequestHeader String authorization, HttpServletResponse response) throws Exception {
-		String headerToken = AuthHeaderHandler.getBearerToken(authorization);
-		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
-		tokenRepo.closeConnection();
-		if(tokenPair == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		String accessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(cookieToken), accessSecret, accessExpiryTime);
-		String xsrfAccessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(headerToken), accessSecret, accessExpiryTime);
-		response.addCookie(createAuthCookie(accessTokenCookieName, accessToken, accessExpiryTime));
-		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfAccessToken).body(true);
-	}
-	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
-	@PostMapping(value = "/revoke")
-	public @ResponseBody ResponseEntity<Boolean> revoke(@CookieValue(name = refreshTokenCookieName, required = false) String cookieToken,
-			@RequestHeader String authorization, HttpServletResponse response) throws Exception {
-		String headerToken = AuthHeaderHandler.getBearerToken(authorization);
-		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
-		if(tokenPair == null) {
-			tokenRepo.closeConnection();
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-		}
-		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
-		tokenRepo.closeConnection();
-		response.addCookie(createAuthCookie(refreshTokenCookieName, "", -1));
-		response.addCookie(createAuthCookie(accessTokenCookieName, "", -1));
-		return ResponseEntity.status(HttpStatus.OK).body(true);
-	}
+//		if(tokenPair == null) {
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+//		}
+//		String accessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(cookieToken), accessSecret, accessExpiryTime);
+//		String xsrfAccessToken = JWTHandler.createToken(JWTHandler.getIdFromToken(headerToken), accessSecret, accessExpiryTime);
+//		response.addCookie(createAuthCookie(accessTokenCookieName, accessToken, accessExpiryTime));
+//		return ResponseEntity.status(HttpStatus.OK).header("Authorization", "Bearer " + xsrfAccessToken).body(true);
+//	}
+//	
+//	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
+//	@PostMapping(value = "/revoke")
+//	public @ResponseBody ResponseEntity<Boolean> revoke(@CookieValue(name = refreshTokenCookieName, required = false) String cookieToken,
+//			@RequestHeader String authorization, HttpServletResponse response) throws Exception {
+//		String headerToken = AuthHeaderHandler.getBearerToken(authorization);
+//		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(headerToken, refreshSecret)) {
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+//		}
+//		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+//		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, headerToken);
+//		if(tokenPair == null) {
+//			tokenRepo.closeConnection();
+//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+//		}
+//		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
+//		tokenRepo.closeConnection();
+//		response.addCookie(createAuthCookie(refreshTokenCookieName, "", -1));
+//		response.addCookie(createAuthCookie(accessTokenCookieName, "", -1));
+//		return ResponseEntity.status(HttpStatus.OK).body(true);
+//	}
 	
 	private String generateSecureRandomString(int length) {
 		SecureRandom randomProvider = new SecureRandom();
@@ -201,6 +232,71 @@ public final class AuthController {
 		}
 		user.clearPassword();
 		return user;
+	}
+	
+	private Boolean verifyAppAuthRecord(String client_id, String redirect_uri) throws Exception {
+		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, 1);
+		appRepo.closeConnection();
+		if(appList == null || appList.size() < 1) {
+			return false;
+		}
+		AppAuthRecord app = appList.get(0);
+		if(!app.getRedirectUri().contentEquals(redirect_uri)) {
+			return false;
+		}
+		return true;
+	}
+	
+	private Boolean saveCodeChallenge(String client_id, String code_challenge, String state) throws Exception {
+		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
+		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		Boolean isSaved = challengeRepo.save(challenge);
+		challengeRepo.closeConnection();
+		return isSaved;
+	}
+	
+	private Boolean verifyCodeChallenge(String client_id, String code_verifier, String state) throws Exception {
+		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state);
+		challengeRepo.closeConnection();
+		if(codeChallenges == null || codeChallenges.size() < 1) {
+			System.out.println("No code challenges found with state: " + state);
+			return false;
+		}
+		CodeChallenge codeChallenge = codeChallenges.get(0);
+		if(codeChallenge.getExpiryDateTime().before(new Timestamp(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis())) || 
+				!codeChallenge.getClientId().contentEquals(client_id)) {
+			System.out.println("Code challenge is expired or doesn't match client id");
+			return false;
+		}
+		String codeHash = Hashing.sha256().hashString(code_verifier, Charsets.UTF_8).toString();
+		if(!codeChallenge.getCodeChallenge().contentEquals(codeHash)) {
+			return false;
+		}
+		return true;
+	}
+	
+	private Boolean saveAuthCode(String client_id, AuthCode authCode) throws Exception {
+		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		Boolean isSaved = authRepo.save(authCode);
+		authRepo.closeConnection();
+		return isSaved;
+	}
+	
+	private AuthCode verifyAuthCode(String client_id, String code) throws Exception {
+		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1);
+		authRepo.closeConnection();
+		if(authCodes == null || authCodes.size() < 1) {
+			return null;
+		}
+		AuthCode authCode = authCodes.get(0);
+		if(authCode.getExpiryDateTime().before(new Timestamp(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis())) ||
+				!authCode.getCode().contentEquals(code)) {
+			return null;
+		}
+		return authCode;
 	}
 	
 	private Cookie createAuthCookie(String name, String value, int expires) {

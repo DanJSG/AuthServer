@@ -1,23 +1,26 @@
 package com.jsg.authserver.datatypes;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 public class CodeChallenge {
 	
 	private String clientId;
 	private String codeChallenge;
 	private String state;
-	private LocalDateTime expires;
+	private Timestamp expires;
 	
 	public CodeChallenge(String clientId, String codeChallenge, String state) {
 		this.clientId = clientId;
 		this.codeChallenge = codeChallenge;
 		this.state = state;
-		this.expires = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(1);
+		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		calendar.add(Calendar.MINUTE, 1);
+		this.expires = new Timestamp(calendar.getTimeInMillis());
 	}
 	
-	public CodeChallenge(String clientId, String codeChallenge, String state, LocalDateTime expires) {
+	public CodeChallenge(String clientId, String codeChallenge, String state, Timestamp expires) {
 		this.clientId = clientId;
 		this.codeChallenge = codeChallenge;
 		this.state = state;
@@ -36,7 +39,7 @@ public class CodeChallenge {
 		return this.state;
 	}
 	
-	public LocalDateTime getExpiryDateTime() {
+	public Timestamp getExpiryDateTime() {
 		return this.expires;
 	}
 	

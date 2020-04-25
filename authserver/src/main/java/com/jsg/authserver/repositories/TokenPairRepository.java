@@ -20,8 +20,8 @@ public final class TokenPairRepository extends MySQLRepository implements SQLRep
 	@Override
 	public Boolean save(TokenPair item) throws Exception {
 		Map<String, Object> valueMap = new HashMap<>();
-		valueMap.put("tokenA", item.getCookieToken());
-		valueMap.put("tokenB", item.getHeaderToken());
+		valueMap.put("cookieToken", item.getCookieToken());
+		valueMap.put("headerToken", item.getHeaderToken());
 		Calendar calendar = Calendar.getInstance();
 		calendar.add(Calendar.DATE, 28);
 		valueMap.put("expires", new Date(calendar.getTimeInMillis()));

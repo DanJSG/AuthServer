@@ -1,10 +1,8 @@
 import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
 import {generateCodeChallenge, generateState} from './codeGen'
-// import '../stylesheets/LoginPage.css'
 
-// http://local.courier.net:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=https:%2F%2Flocal.courier.net:3000%2Fauth_callback
-// http://local.courier.net:3000/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=https://local.courier.net:3000/auth_callback
+// local.courier.net:3000/oauth2/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=http://local.courier.net:3000/oauth2/auth_callback
 
 function LoginPage() {
 
@@ -20,8 +18,8 @@ function LoginPage() {
         })
         return newParams;
     });
-    const state = generateState();
-    const codeChallenge = generateCodeChallenge();
+    const [state] = useState(generateState());
+    const [codeChallenge] = useState(generateCodeChallenge());
 
     const checkForm = (email, password) => {
         if(email === undefined || email === null || email === "") {
@@ -65,6 +63,7 @@ function LoginPage() {
         })
         .catch((error) => {
             console.log(`Fetch error: ${error}`);
+            setFormError("An error when contacting the authorization server.");
         })
     }
 
@@ -81,7 +80,7 @@ function LoginPage() {
     const redirectToCallback = () => {
         // const uriString = `${params.redirect_uri}?code=${authCode}&state=${state}`;
         // console.log(uriString);
-        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${state}`;
+        window.location.href = `${params.redirect_uri}?code=${authCode}&state=${state}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&code_verifier=${codeChallenge.code_verifier}`;
     }
 
     return(

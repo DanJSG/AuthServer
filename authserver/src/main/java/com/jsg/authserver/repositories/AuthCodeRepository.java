@@ -1,12 +1,9 @@
 package com.jsg.authserver.repositories;
 
 import java.sql.ResultSet;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import com.jsg.authserver.datatypes.AuthCode;
@@ -22,6 +19,7 @@ public class AuthCodeRepository extends MySQLRepository implements SQLRepository
 	public Boolean save(AuthCode item) throws Exception {
 		Map<String, Object> valueMap = new HashMap<>();
 		valueMap.put("client_id", item.getClientId());
+		valueMap.put("user_id", item.getUserId());
 		valueMap.put("code", item.getCode());
 		valueMap.put("expires", item.getExpiryDateTime());
 		try {
@@ -46,8 +44,9 @@ public class AuthCodeRepository extends MySQLRepository implements SQLRepository
 			while(results.next()) {
 				authCodes.add(new AuthCode(
 						results.getString("client_id"),
+						results.getLong("user_id"),
 						results.getString("code"),
-						LocalDateTime.parse(results.getString("expires"), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.UK))));
+						results.getTimestamp("expires")));
 			}
 			if(authCodes.size() == 0) {
 				return null;
