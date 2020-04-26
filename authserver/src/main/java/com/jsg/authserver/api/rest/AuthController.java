@@ -11,6 +11,7 @@ import java.util.TimeZone;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -316,7 +317,8 @@ public final class AuthController {
 			return false;
 		}
 		String codeHash = Hashing.sha256().hashString(code_verifier, Charsets.UTF_8).toString();
-		if(!codeChallenge.getCodeChallenge().contentEquals(codeHash)) {
+		String b64urlCodeHash = Base64.encodeBase64URLSafeString(codeHash.getBytes());
+		if(!codeChallenge.getCodeChallenge().contentEquals(b64urlCodeHash)) {
 			return false;
 		}
 		return true;
@@ -351,5 +353,7 @@ public final class AuthController {
 		cookie.setHttpOnly(true);
 		return cookie;
 	}
+	
+	
 	
 }
