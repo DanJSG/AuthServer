@@ -46,7 +46,7 @@ public final class TokenPairRepository extends MySQLRepository implements SQLRep
 			ResultSet results = super.findWhereEquals(searchColumn, value, "*", limit);
 			ArrayList<TokenPair> tokens = new ArrayList<>();
 			while(results.next()) {
-				tokens.add(new TokenPair(results.getString("tokenA"), results.getString("tokenB"), results.getLong("id"), results.getBoolean("expired")));
+				tokens.add(new TokenPair(results.getString("cookieToken"), results.getString("headerToken"), results.getLong("id"), results.getBoolean("expired")));
 			}
 			return tokens;
 		} catch (Exception e) {

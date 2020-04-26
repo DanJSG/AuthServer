@@ -14,10 +14,32 @@ function CallbackPage() {
         return newParams;
     });
 
-    const requestAccessToken = () => {
-        // send fetch request for access token
-        // once this has completed:
-        window.location.href = "http://local.courier.net:3000"
+    const requestAccessToken = (refresh_token) => {
+        console.log("Requesting access token with: " + refresh_token);
+        const url = `http://local.courier.net:8080/api/auth/token` +
+                    `?refresh_token=${refresh_token}` + 
+                    `&grant_type=refresh_token`;
+        fetch(url, {
+            method: "POST",
+            credentials: "include"
+        })
+        .then((response) => {
+            if(response.status !== 200) {
+                console.log(`Request failed. Returned status code ${response.status}. Response object logged below.`);
+                console.log(response);
+                return;
+            }
+            return response.json();
+        })
+        .then((json) => {
+            console.log(json);
+            console.log(json.token);
+            localStorage.setItem("acc.tok", json.token);
+            window.location.href = "http://local.courier.net:3000";
+        })
+        .catch((error) => {
+            console.log(error);
+        })
     }
 
     const requestRefreshToken = () => {
@@ -27,7 +49,7 @@ function CallbackPage() {
                     `&code=${params.code}` +
                     `&redirect_uri=${params.redirect_uri}` +
                     `&code_verifier=${params.code_verifier}` +
-                    `&grant_type=authorization_code`
+                    `&grant_type=authorization_code`;
         fetch(url, {
             method: "POST",
             credentials: "include"
@@ -44,7 +66,7 @@ function CallbackPage() {
             console.log(json);
             console.log(json.token);
             localStorage.setItem("ref.tok", json.token);
-            requestAccessToken();
+            requestAccessToken(json.token);
         })
         .catch((error) => {
             console.log(error);

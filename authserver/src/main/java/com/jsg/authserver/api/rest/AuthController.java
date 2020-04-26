@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -106,26 +107,50 @@ public final class AuthController {
 	
 	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
 	@PostMapping(value = "/token")
-	public @ResponseBody ResponseEntity<String> token(@RequestParam String code, @RequestParam String state,
-			@RequestParam String client_id, @RequestParam String redirect_uri, @RequestParam String grant_type,
-			@RequestParam String code_verifier, HttpServletResponse response) throws Exception {
+	public @ResponseBody ResponseEntity<String> token(HttpServletResponse response,
+			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
+			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
+			@RequestParam(required=false) String refresh_token, @RequestParam(required=false) String client_id,
+			@RequestParam String grant_type, @CookieValue(name = refreshTokenCookieName, required = false) String refreshCookie) throws Exception {
 		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
-				return getTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
+				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
 			case REFRESH_TOKEN_GRANT_TYPE:
-				// call method
-				break;
+				return getAccessToken(refresh_token, refreshCookie, response);
 			default:
 				return unauthorizedResponse;
 		}
-		return null;
-		
 	}
 	
-	private ResponseEntity<String> getTokenWithAuthCode(String code, String state, String client_id, String redirect_uri,
+	private ResponseEntity<String> getAccessToken(String refresh_token, String refreshCookie, HttpServletResponse response) throws Exception {
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		if(refresh_token == null || refreshCookie == null) {
+			return unauthorizedResponse;
+		}
+		if(!JWTHandler.tokenIsValid(refreshCookie, refreshSecret) || !JWTHandler.tokenIsValid(refresh_token, refreshSecret)) {
+			return unauthorizedResponse;
+		}
+		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, refreshCookie, refresh_token);
+		tokenRepo.closeConnection();
+		if(tokenPair == null) {
+			return unauthorizedResponse;
+		}
+		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), accessSecret, accessExpiryTime);
+		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), accessSecret, accessExpiryTime);
+		response.addCookie(createAuthCookie(accessTokenCookieName, cookieToken, accessExpiryTime));
+		Map<String, String> responseBody = new HashMap<>();
+		responseBody.put("token", headerToken);
+		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
+	}
+	
+	private ResponseEntity<String> getRefreshTokenWithAuthCode(String code, String state, String client_id, String redirect_uri,
 			String code_verifier, HttpServletResponse response) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
+			return unauthorizedResponse;
+		}
 		if(!verifyAppAuthRecord(client_id, redirect_uri)) {
 			System.out.println("Problem finding app registration");
 			return unauthorizedResponse;
@@ -195,6 +220,26 @@ public final class AuthController {
 //		return ResponseEntity.status(HttpStatus.OK).body(true);
 //	}
 	
+	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true")
+	@PostMapping(value = "/revoke")
+	public @ResponseBody ResponseEntity<String> revoke(@CookieValue(name=refreshTokenCookieName, required=false) String cookieToken,
+			@RequestParam String token, @RequestParam String client_id, HttpServletResponse response) throws Exception {
+		if(!JWTHandler.tokenIsValid(cookieToken, refreshSecret) || !JWTHandler.tokenIsValid(token, refreshSecret)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, token);
+		if(tokenPair == null) {
+			tokenRepo.closeConnection();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
+		tokenRepo.closeConnection();
+		response.addCookie(createAuthCookie(refreshTokenCookieName, null, 0));
+		response.addCookie(createAuthCookie(accessTokenCookieName, null, 0));
+		return ResponseEntity.status(HttpStatus.OK).body(null);
+	}
+	
 	private String generateSecureRandomString(int length) {
 		SecureRandom randomProvider = new SecureRandom();
 		StringBuilder stringBuilder = new StringBuilder();
@@ -205,7 +250,7 @@ public final class AuthController {
 	}
 	
 	private TokenPair verifyRefreshTokens(TokenPairRepository tokenRepo, String cookieToken, String headerToken) {
-		List<TokenPair> results = tokenRepo.findWhereEqual("tokenA", cookieToken, 1);
+		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1);
 		if(results == null || results.size() < 1) {
 			return null;
 		}
