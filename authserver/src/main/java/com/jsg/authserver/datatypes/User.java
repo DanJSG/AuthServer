@@ -1,6 +1,11 @@
 package com.jsg.authserver.datatypes;
 
+import java.util.List;
+
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsg.authserver.repositories.UserRepository;
 
 public class User {
 	
@@ -39,6 +44,20 @@ public class User {
 	
 	public void clearPassword() {
 		this.password = null;
+	}
+	
+	public Boolean verifyCredentials(UserRepository userRepo) throws Exception {
+		List<User> results = userRepo.findWhereEqual("email", email, 1);
+		if(results == null || results.size() < 1) {
+			return false;
+		}
+		User user = results.get(0);
+		if(!BCrypt.checkpw(password, user.getPassword())) {
+			return false;
+		}
+		user.clearPassword();
+		this.id = user.getId();
+		return true;
 	}
 	
 }
