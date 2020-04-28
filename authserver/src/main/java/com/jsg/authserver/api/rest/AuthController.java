@@ -111,20 +111,21 @@ public final class AuthController {
 	public @ResponseBody ResponseEntity<String> token(HttpServletResponse response,
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
 			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
-			@RequestParam(required=false) String refresh_token, @RequestParam(required=false) String client_id,
+			@RequestParam(required=false) String refresh_token, @RequestParam String client_id,
 			@RequestParam String grant_type, @CookieValue(name = refreshTokenCookieName, required = false) String refreshCookie) throws Exception {
 		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
 			case REFRESH_TOKEN_GRANT_TYPE:
-				return getAccessToken(refresh_token, refreshCookie, response);
+				return getAccessToken(client_id, refresh_token, refreshCookie, response);
 			default:
 				return unauthorizedResponse;
 		}
 	}
 	
-	private ResponseEntity<String> getAccessToken(String refresh_token, String refreshCookie, HttpServletResponse response) throws Exception {
+	private ResponseEntity<String> getAccessToken(String client_id, String refresh_token,
+			String refreshCookie, HttpServletResponse response) throws Exception {
 		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		if(refresh_token == null || refreshCookie == null) {
 			return unauthorizedResponse;
@@ -133,7 +134,7 @@ public final class AuthController {
 			return unauthorizedResponse;
 		}
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, refreshCookie, refresh_token);
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, client_id, refreshCookie, refresh_token);
 		tokenRepo.closeConnection();
 		if(tokenPair == null) {
 			return unauthorizedResponse;
@@ -168,7 +169,7 @@ public final class AuthController {
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		Boolean areTokensSaved = tokenRepo.save(new TokenPair(cookieToken, headerToken, false));
+		Boolean areTokensSaved = tokenRepo.save(new TokenPair(client_id, cookieToken, headerToken, false));
 		tokenRepo.closeConnection();
 		if(!areTokensSaved) {
 			System.out.println("Problem saving tokens");
@@ -229,7 +230,7 @@ public final class AuthController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, cookieToken, token);
+		TokenPair tokenPair = verifyRefreshTokens(tokenRepo, client_id, cookieToken, token);
 		if(tokenPair == null) {
 			tokenRepo.closeConnection();
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
@@ -250,13 +251,16 @@ public final class AuthController {
 		return stringBuilder.toString();
 	}
 	
-	private TokenPair verifyRefreshTokens(TokenPairRepository tokenRepo, String cookieToken, String headerToken) {
+	private TokenPair verifyRefreshTokens(TokenPairRepository tokenRepo, String client_id, String cookieToken, String headerToken) {
 		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1);
 		if(results == null || results.size() < 1) {
 			return null;
 		}
 		TokenPair tokenPair = results.get(0);
 		if(tokenPair.isExpired()) {
+			return null;
+		}
+		if(!tokenPair.getClientId().contentEquals(client_id)) {
 			return null;
 		}
 		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
@@ -353,7 +357,4 @@ public final class AuthController {
 		cookie.setHttpOnly(true);
 		return cookie;
 	}
-	
-	
-	
 }

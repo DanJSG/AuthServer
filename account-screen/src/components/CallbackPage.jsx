@@ -17,7 +17,8 @@ function CallbackPage() {
     const requestAccessToken = (refresh_token) => {
         console.log("Requesting access token with: " + refresh_token);
         const url = `http://local.courier.net:8080/api/auth/token` +
-                    `?refresh_token=${refresh_token}` + 
+                    `?client_id=${params.client_id}` + 
+                    `&refresh_token=${refresh_token}` + 
                     `&grant_type=refresh_token`;
         fetch(url, {
             method: "POST",
