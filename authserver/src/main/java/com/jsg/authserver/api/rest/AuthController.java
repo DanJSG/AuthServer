@@ -210,53 +210,6 @@ public final class AuthController {
 		return stringBuilder.toString();
 	}
 	
-//	private TokenPair verifyRefreshTokens(TokenPairRepository tokenRepo, String client_id, String cookieToken,
-//			String headerToken, String secret) {
-//		if(!JWTHandler.tokenIsValid(cookieToken, secret) || !JWTHandler.tokenIsValid(headerToken, secret)) {
-//			return null;
-//		}
-//		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1);
-//		if(results == null || results.size() < 1) {
-//			return null;
-//		}
-//		TokenPair tokenPair = results.get(0);
-//		if(tokenPair.isExpired()) {
-//			return null;
-//		}
-//		if(!tokenPair.getClientId().contentEquals(client_id)) {
-//			return null;
-//		}
-//		if(!headerToken.contentEquals(tokenPair.getHeaderToken())) {
-//			return null;
-//		}
-//		return tokenPair;
-//	}
-	
-//	private User verifyCredentials(UserRepository userRepo, String email, String password) throws Exception {
-//		List<User> results = userRepo.findWhereEqual("email", email, 1);
-//		if(results == null || results.size() < 1) {
-//			return null;
-//		}
-//		User user = results.get(0);
-//		if(!BCrypt.checkpw(password, user.getPassword())) {
-//			return null;
-//		}
-//		user.clearPassword();
-//		return user;
-//	}
-	
-//	private AppAuthRecord verifyAppAuthRecord(AppAuthRecordRepository appRepo, String client_id, String redirect_uri) throws Exception {
-//		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, 1);
-//		if(appList == null || appList.size() < 1) {
-//			return null;
-//		}
-//		AppAuthRecord app = appList.get(0);
-//		if(!app.getRedirectUri().contentEquals(redirect_uri)) {
-//			return null;
-//		}
-//		return app;
-//	}
-	
 	private Boolean saveCodeChallenge(String client_id, String code_challenge, String state) throws Exception {
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
 		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
@@ -265,44 +218,12 @@ public final class AuthController {
 		return isSaved;
 	}
 	
-//	private CodeChallenge verifyCodeChallenge(CodeChallengeRepository challengeRepo, String client_id,
-//			String code_verifier, String state) throws Exception {
-//		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state);
-//		if(codeChallenges == null || codeChallenges.size() < 1) {
-//			return null;
-//		}
-//		CodeChallenge codeChallenge = codeChallenges.get(0);
-//		if(codeChallenge.getExpiryDateTime().before(new Timestamp(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis())) || 
-//				!codeChallenge.getClientId().contentEquals(client_id)) {
-//			return null;
-//		}
-//		String codeHash = Hashing.sha256().hashString(code_verifier, Charsets.UTF_8).toString();
-//		String b64urlCodeHash = Base64.encodeBase64URLSafeString(codeHash.getBytes());
-//		if(!codeChallenge.getCodeChallenge().contentEquals(b64urlCodeHash)) {
-//			return null;
-//		}
-//		return codeChallenge;
-//	}
-	
 	private Boolean saveAuthCode(String client_id, AuthCode authCode) throws Exception {
 		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		Boolean isSaved = authRepo.save(authCode);
 		authRepo.closeConnection();
 		return isSaved;
 	}
-	
-//	private AuthCode verifyAuthCode(AuthCodeRepository authRepo, String client_id, String code) throws Exception {
-//		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1);
-//		if(authCodes == null || authCodes.size() < 1) {
-//			return null;
-//		}
-//		AuthCode authCode = authCodes.get(0);
-//		if(authCode.getExpiryDateTime().before(new Timestamp(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis())) ||
-//				!authCode.getCode().contentEquals(code)) {
-//			return null;
-//		}
-//		return authCode;
-//	}
 	
 	private Cookie createAuthCookie(String name, String value, int expires) {
 		Cookie cookie = new Cookie(name, value);
