@@ -2,8 +2,6 @@ package com.jsg.authserver.repositories;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +20,7 @@ public final class TokenPairRepository extends MySQLRepository implements SQLRep
 		Map<String, Object> valueMap = new HashMap<>();
 		valueMap.put("cookieToken", item.getCookieToken());
 		valueMap.put("headerToken", item.getHeaderToken());
-		Calendar calendar = Calendar.getInstance();
-		calendar.add(Calendar.DATE, 28);
-		valueMap.put("expires", new Date(calendar.getTimeInMillis()));
+		valueMap.put("expires", item.getExpiryDateTime());
 		valueMap.put("client_id", item.getClientId());
 		try {
 			super.save(valueMap);
@@ -52,6 +48,7 @@ public final class TokenPairRepository extends MySQLRepository implements SQLRep
 						results.getString("cookieToken"),
 						results.getString("headerToken"),
 						results.getLong("id"),
+						results.getTimestamp("expires"),
 						results.getBoolean("expired")));
 			}
 			return tokens;

@@ -93,11 +93,12 @@ public final class AuthController {
 			return unauthorizedResponse;
 		}
 		appRepo.closeConnection();
-		if(!saveCodeChallenge(client_id, code_challenge, state)) {
+		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
+		if(!challenge.save(sqlConnectionString, sqlUsername, sqlPassword)) {
 			return unauthorizedResponse;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		if(!saveAuthCode(client_id, authCode)) {
+		if(!authCode.save(sqlConnectionString, sqlUsername, sqlPassword)) {
 			return unauthorizedResponse;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
@@ -171,10 +172,8 @@ public final class AuthController {
 		challengeRepo.closeConnection();
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		Boolean areTokensSaved = tokenRepo.save(new TokenPair(client_id, cookieToken, headerToken, false));
-		tokenRepo.closeConnection();
-		if(!areTokensSaved) {
+		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
+		if(!tokenPair.save(sqlConnectionString, sqlUsername, sqlPassword)) {
 			System.out.println("Problem saving tokens");
 			return unauthorizedResponse;
 		}
@@ -208,21 +207,6 @@ public final class AuthController {
 			stringBuilder.append(ALPHA_NUM_CHARS.charAt(randomProvider.nextInt(ALPHA_NUM_CHARS.length())));
 		}
 		return stringBuilder.toString();
-	}
-	
-	private Boolean saveCodeChallenge(String client_id, String code_challenge, String state) throws Exception {
-		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		Boolean isSaved = challengeRepo.save(challenge);
-		challengeRepo.closeConnection();
-		return isSaved;
-	}
-	
-	private Boolean saveAuthCode(String client_id, AuthCode authCode) throws Exception {
-		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		Boolean isSaved = authRepo.save(authCode);
-		authRepo.closeConnection();
-		return isSaved;
 	}
 	
 	private Cookie createAuthCookie(String name, String value, int expires) {

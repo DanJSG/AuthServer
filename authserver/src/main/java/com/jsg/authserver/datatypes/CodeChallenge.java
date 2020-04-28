@@ -55,6 +55,13 @@ public class CodeChallenge {
 		return new Timestamp(calendar.getTimeInMillis());
 	}
 	
+	public Boolean save(String connectionString, String username, String password) throws Exception {
+		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(connectionString, username, password);
+		Boolean isSaved = challengeRepo.save(this);
+		challengeRepo.closeConnection();
+		return isSaved;
+	}
+	
 	public Boolean verifyCodeChallenge(CodeChallengeRepository challengeRepo, String code_verifier) throws Exception {
 		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state);
 		if(codeChallenges == null || codeChallenges.size() < 1) {

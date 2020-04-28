@@ -1,6 +1,9 @@
 package com.jsg.authserver.datatypes;
 
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
@@ -11,22 +14,20 @@ public class TokenPair {
 	private String cookieToken;
 	private String headerToken;
 	private long id;
+	private Timestamp expires;
 	private Boolean isExpired;
 	
-	public TokenPair(String clientId, String cookieToken, String headerToken, long id, Boolean isExpired) {
+	public TokenPair(String clientId, String cookieToken, String headerToken, long id, Timestamp expires, Boolean isExpired) {
 		this.clientId = clientId;
 		this.cookieToken = cookieToken;
 		this.headerToken = headerToken;
 		this.id = id;
+		this.expires = expires;
 		this.isExpired = isExpired;
 	}
 	
-	public TokenPair(String clientId, String cookieToken, String headerToken, Boolean isExpired) {
-		this(clientId, cookieToken, headerToken, -1, isExpired);
-	}
-	
 	public TokenPair(String clientId, String cookieToken, String headerToken) {
-		this(clientId, cookieToken, headerToken, -1, false);
+		this(clientId, cookieToken, headerToken, -1, createExpiryTimestamp(), false);
 	}
 	
 	public String getClientId() {
@@ -45,8 +46,25 @@ public class TokenPair {
 		return id;
 	}
 	
+	public Timestamp getExpiryDateTime() {
+		return expires;
+	}
+	
 	public Boolean isExpired() {
 		return isExpired;
+	}
+	
+	private static Timestamp createExpiryTimestamp() {
+		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		calendar.add(Calendar.DATE, 28);
+		return new Timestamp(calendar.getTimeInMillis());
+	}
+	
+	public Boolean save(String connectionString, String username, String password) throws Exception {
+		TokenPairRepository repo = new TokenPairRepository(connectionString, username, password);
+		Boolean isSaved = repo.save(this);
+		repo.closeConnection();
+		return isSaved;
 	}
 	
 	public Boolean verifyRefreshTokens(TokenPairRepository tokenRepo, String secret) {

@@ -51,6 +51,13 @@ public class AuthCode {
 		return new Timestamp(calendar.getTimeInMillis());
 	}
 	
+	public Boolean save(String connectionString, String username, String password) throws Exception {
+		AuthCodeRepository authRepo = new AuthCodeRepository(connectionString, username, password);
+		Boolean isSaved = authRepo.save(this);
+		authRepo.closeConnection();
+		return isSaved;
+	}
+	
 	public Boolean verifyAuthCode(AuthCodeRepository authRepo) throws Exception {
 		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1);
 		if(authCodes == null || authCodes.size() < 1) {
