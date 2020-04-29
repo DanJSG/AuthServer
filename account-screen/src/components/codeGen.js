@@ -25,7 +25,8 @@ const generateCodeChallenge = () => {
     console.log("Base64url: " + b64urlEncode(SHA256(codeVerifier).toString()));
     return {
         code_verifier: codeVerifier,
-        code_challenge: b64urlEncode(SHA256(codeVerifier).toString())
+        code_challenge: b64urlEncode(SHA256(codeVerifier).toString()),
+        code_challenge_method: 'S256'
     };
 }
 

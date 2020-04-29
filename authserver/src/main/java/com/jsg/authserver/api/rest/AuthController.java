@@ -45,6 +45,7 @@ public final class AuthController {
 	private static final String REFRESH_TOKEN_GRANT_TYPE = "refresh_token";
 	private static final String REFRESH_TOKEN_NAME = "ref.tok";
 	private static final String ACCESS_TOKEN_NAME = "acc.tok";
+	private static final String CODE_CHALLENGE_METHOD = "S256";
 	
 	private final int accessExpiryTime;
 	private final int refreshExpiryTime;
@@ -76,8 +77,12 @@ public final class AuthController {
 	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body,
 			@RequestParam String code_challenge, @RequestParam String state, 
 			@RequestParam String response_type, @RequestParam String redirect_uri,
-			@RequestParam String client_id, HttpServletResponse response) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
+			@RequestParam String client_id, @RequestParam String code_challenge_method,
+			HttpServletResponse response) throws Exception {
+		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		if(!code_challenge_method.contentEquals(CODE_CHALLENGE_METHOD)) {
+			return unauthorizedResponse;
+		}
 		LoginCredentials credentials = new LoginCredentials(body);
 		UserRepository userRepo = new UserRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		User user = new User(credentials.getEmail(), credentials.getPassword());
