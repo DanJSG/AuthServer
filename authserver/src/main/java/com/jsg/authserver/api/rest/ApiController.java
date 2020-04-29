@@ -18,26 +18,26 @@ public abstract class ApiController {
 	protected static final String CODE_CHALLENGE_METHOD = "S256";
 	protected static final ResponseEntity<String> UNAUTHORIZED_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 	
-	protected final int accessExpiryTime;
-	protected final int refreshExpiryTime;
-	protected final String refreshSecret;
-	protected final String accessSecret;
-	protected final String sqlUsername;
-	protected final String sqlPassword;
-	protected final String sqlConnectionString;
+	protected final int ACCESS_TOKEN_EXPIRY_TIME;
+	protected final int REFRESH_TOKEN_EXPIRY_TIME;
+	protected final String REFRESH_TOKEN_SECRET;
+	protected final String ACCESS_TOKEN_SECRET;
+	protected final String SQL_USERNAME;
+	protected final String SQL_PASSWORD;
+	protected final String SQL_CONNECTION_STRING;
 	
 	@Autowired
 	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
 							String refreshTokenSecret, String accessTokenSecret,
 							String sqlUsername, String sqlPassword,
 							String sqlConnectionString) {
-		this.accessExpiryTime = accessTokenExpiryTime;
-		this.accessSecret = accessTokenSecret;
-		this.refreshExpiryTime = refreshTokenExpiryTime;
-		this.refreshSecret = refreshTokenSecret;
-		this.sqlConnectionString = sqlConnectionString;
-		this.sqlUsername = sqlUsername;
-		this.sqlPassword = sqlPassword;
+		this.ACCESS_TOKEN_EXPIRY_TIME = accessTokenExpiryTime;
+		this.ACCESS_TOKEN_SECRET = accessTokenSecret;
+		this.REFRESH_TOKEN_EXPIRY_TIME = refreshTokenExpiryTime;
+		this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
+		this.SQL_CONNECTION_STRING = sqlConnectionString;
+		this.SQL_USERNAME = sqlUsername;
+		this.SQL_PASSWORD = sqlPassword;
 	}
 	
 	protected Cookie createCookie(String name, String value, int expires) {

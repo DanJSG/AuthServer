@@ -50,14 +50,14 @@ public final class AuthorizationController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		LoginCredentials credentials = new LoginCredentials(body);
-		UserRepository userRepo = new UserRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		UserRepository userRepo = new UserRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		User user = new User(credentials.getEmail(), credentials.getPassword());
 		if(!user.verifyCredentials(userRepo)) {
 			userRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		userRepo.closeConnection();
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord(appRepo)) {
 			appRepo.closeConnection();
@@ -65,11 +65,11 @@ public final class AuthorizationController extends ApiController {
 		}
 		appRepo.closeConnection();
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		if(!challenge.save(sqlConnectionString, sqlUsername, sqlPassword)) {
+		if(!challenge.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		if(!authCode.save(sqlConnectionString, sqlUsername, sqlPassword)) {
+		if(!authCode.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());

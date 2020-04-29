@@ -63,16 +63,16 @@ public final class TokenController extends ApiController {
 		if(refresh_token == null || refreshCookie == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPairRepository tokenRepo = new TokenPairRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		TokenPair tokenPair = new TokenPair(client_id, refreshCookie, refresh_token);
-		if(!tokenPair.verifyRefreshTokens(tokenRepo, refreshSecret)) {
+		if(!tokenPair.verifyRefreshTokens(tokenRepo, REFRESH_TOKEN_SECRET)) {
 			tokenRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		tokenRepo.closeConnection();
-		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), accessSecret, accessExpiryTime);
-		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), accessSecret, accessExpiryTime);
-		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, accessExpiryTime));
+		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY_TIME);
+		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
@@ -83,35 +83,35 @@ public final class TokenController extends ApiController {
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord(appRepo)) {
 			appRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		appRepo.closeConnection();
-		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		AuthCodeRepository authRepo = new AuthCodeRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AuthCode authCode = new AuthCode(client_id, code);
 		if(!authCode.verifyAuthCode(authRepo)) {
 			authRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		authRepo.closeConnection();
-		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		CodeChallenge challenge = new CodeChallenge(client_id, state);
 		if(!challenge.verifyCodeChallenge(challengeRepo, code_verifier)) {
 			challengeRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		challengeRepo.closeConnection();
-		String cookieToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
-		String headerToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
+		String cookieToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
-		if(!tokenPair.save(sqlConnectionString, sqlUsername, sqlPassword)) {
+		if(!tokenPair.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		response.addCookie(createCookie(REFRESH_TOKEN_NAME, cookieToken, refreshExpiryTime));
+		response.addCookie(createCookie(REFRESH_TOKEN_NAME, cookieToken, REFRESH_TOKEN_EXPIRY_TIME));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));

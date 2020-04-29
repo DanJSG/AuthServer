@@ -33,9 +33,9 @@ public final class RevocationController extends ApiController {
 	@PostMapping(value = "/revoke")
 	public @ResponseBody ResponseEntity<String> revoke(@CookieValue(name=REFRESH_TOKEN_NAME, required=false) String cookieToken,
 			@RequestParam String token, @RequestParam String client_id, HttpServletResponse response) throws Exception {
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
+		TokenPairRepository tokenRepo = new TokenPairRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, token);
-		if(!tokenPair.verifyRefreshTokens(tokenRepo, refreshSecret)) {
+		if(!tokenPair.verifyRefreshTokens(tokenRepo, REFRESH_TOKEN_SECRET)) {
 			tokenRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
