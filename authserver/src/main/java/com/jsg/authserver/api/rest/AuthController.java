@@ -13,7 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +35,6 @@ import com.jsg.authserver.repositories.UserRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
-@CrossOrigin(origins = "http://local.courier.net:3000")
 @RequestMapping("/api/auth")
 public final class AuthController {
 	
@@ -73,7 +71,6 @@ public final class AuthController {
 		this.sqlPassword = sqlPassword;
 	}
 	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*")
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body,
 			@RequestParam String code_challenge, @RequestParam String state, 
@@ -109,7 +106,6 @@ public final class AuthController {
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
 	}
 	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true", exposedHeaders="Authorization")
 	@PostMapping(value = "/token")
 	public @ResponseBody ResponseEntity<String> token(HttpServletResponse response,
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
@@ -186,7 +182,6 @@ public final class AuthController {
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
 	}
 	
-	@CrossOrigin(origins = "http://local.courier.net:3000/*", allowCredentials="true")
 	@PostMapping(value = "/revoke")
 	public @ResponseBody ResponseEntity<String> revoke(@CookieValue(name=REFRESH_TOKEN_NAME, required=false) String cookieToken,
 			@RequestParam String token, @RequestParam String client_id, HttpServletResponse response) throws Exception {
