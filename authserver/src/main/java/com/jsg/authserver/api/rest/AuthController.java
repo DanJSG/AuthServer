@@ -55,13 +55,13 @@ public final class AuthController {
 	private final String sqlConnectionString;
 	
 	@Autowired
-	public AuthController(@Value("${accessTokenExpiryTime}") int accessTokenExpiryTime,
-							@Value("${refreshTokenExpiryTime}") int refreshTokenExpiryTime,
-							@Value("${refreshTokenSecret}") String refreshTokenSecret,
-							@Value("${accessTokenSecret}") String accessTokenSecret,
-							@Value("${sqlUsername}") String sqlUsername,
-							@Value("${sqlPassword}") String sqlPassword,
-							@Value("${sqlConnectionString}") String sqlConnectionString) {
+	public AuthController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
+							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
+							@Value("${token.secret.refresh}") String refreshTokenSecret,
+							@Value("${token.secret.access}") String accessTokenSecret,
+							@Value("${sql.username}") String sqlUsername,
+							@Value("${sql.password}") String sqlPassword,
+							@Value("${sql.connectionstring}") String sqlConnectionString) {
 		this.accessExpiryTime = accessTokenExpiryTime;
 		this.accessSecret = accessTokenSecret;
 		this.refreshExpiryTime = refreshTokenExpiryTime;
