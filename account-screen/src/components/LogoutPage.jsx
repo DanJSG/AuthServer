@@ -6,7 +6,7 @@ function LogoutPage() {
 
     const revokeRefreshToken = () => {
         const token = localStorage.getItem("ref.tok");
-        const url = `http://local.courier.net:8080/api/auth/revoke` +
+        const url = `http://local.courier.net:8080/api/v1/revoke` +
                     `?client_id=${client_id}` + 
                     `&token=${token}`;
         fetch(url, {

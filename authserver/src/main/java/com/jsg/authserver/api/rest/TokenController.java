@@ -1,21 +1,16 @@
 package com.jsg.authserver.api.rest;
 
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,86 +19,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
 import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
-import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.TokenPair;
-import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.repositories.AppAuthRecordRepository;
 import com.jsg.authserver.repositories.AuthCodeRepository;
 import com.jsg.authserver.repositories.CodeChallengeRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
-import com.jsg.authserver.repositories.UserRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
-@RequestMapping("/api/auth")
-public final class AuthController {
-	
-	private static final String ALPHA_NUM_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	private static final String AUTH_CODE_GRANT_TYPE = "authorization_code"; 
-	private static final String REFRESH_TOKEN_GRANT_TYPE = "refresh_token";
-	private static final String REFRESH_TOKEN_NAME = "ref.tok";
-	private static final String ACCESS_TOKEN_NAME = "acc.tok";
-	private static final String CODE_CHALLENGE_METHOD = "S256";
-	private static final ResponseEntity<String> UNAUTHORIZED_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-	
-	private final int accessExpiryTime;
-	private final int refreshExpiryTime;
-	private final String refreshSecret;
-	private final String accessSecret;
-	private final String sqlUsername;
-	private final String sqlPassword;
-	private final String sqlConnectionString;
-	
+public final class TokenController extends ApiController {
+
 	@Autowired
-	public AuthController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
+	public TokenController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
 							@Value("${token.secret.refresh}") String refreshTokenSecret,
 							@Value("${token.secret.access}") String accessTokenSecret,
 							@Value("${sql.username}") String sqlUsername,
 							@Value("${sql.password}") String sqlPassword,
 							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		this.accessExpiryTime = accessTokenExpiryTime;
-		this.accessSecret = accessTokenSecret;
-		this.refreshExpiryTime = refreshTokenExpiryTime;
-		this.refreshSecret = refreshTokenSecret;
-		this.sqlConnectionString = sqlConnectionString;
-		this.sqlUsername = sqlUsername;
-		this.sqlPassword = sqlPassword;
-	}
-	
-	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body,
-			@RequestParam String code_challenge, @RequestParam String state, 
-			@RequestParam String response_type, @RequestParam String redirect_uri,
-			@RequestParam String client_id, @RequestParam String code_challenge_method,
-			HttpServletResponse response) throws Exception {
-		if(!code_challenge_method.contentEquals(CODE_CHALLENGE_METHOD)) {
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		LoginCredentials credentials = new LoginCredentials(body);
-		UserRepository userRepo = new UserRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		User user = new User(credentials.getEmail(), credentials.getPassword());
-		if(!user.verifyCredentials(userRepo)) {
-			userRepo.closeConnection();
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		userRepo.closeConnection();
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
-		if(!app.verifyAppAuthRecord(appRepo)) {
-			appRepo.closeConnection();
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		appRepo.closeConnection();
-		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		if(!challenge.save(sqlConnectionString, sqlUsername, sqlPassword)) {
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		if(!authCode.save(sqlConnectionString, sqlUsername, sqlPassword)) {
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, accessTokenSecret,
+				sqlUsername, sqlPassword, sqlConnectionString);
 	}
 	
 	@PostMapping(value = "/token")
@@ -137,7 +72,7 @@ public final class AuthController {
 		tokenRepo.closeConnection();
 		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), accessSecret, accessExpiryTime);
 		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), accessSecret, accessExpiryTime);
-		response.addCookie(createAuthCookie(ACCESS_TOKEN_NAME, cookieToken, accessExpiryTime));
+		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, accessExpiryTime));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
@@ -176,42 +111,10 @@ public final class AuthController {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		response.addCookie(createAuthCookie(REFRESH_TOKEN_NAME, cookieToken, refreshExpiryTime));
+		response.addCookie(createCookie(REFRESH_TOKEN_NAME, cookieToken, refreshExpiryTime));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
 	}
 	
-	@PostMapping(value = "/revoke")
-	public @ResponseBody ResponseEntity<String> revoke(@CookieValue(name=REFRESH_TOKEN_NAME, required=false) String cookieToken,
-			@RequestParam String token, @RequestParam String client_id, HttpServletResponse response) throws Exception {
-		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
-		TokenPair tokenPair = new TokenPair(client_id, cookieToken, token);
-		if(!tokenPair.verifyRefreshTokens(tokenRepo, refreshSecret)) {
-			tokenRepo.closeConnection();
-			return UNAUTHORIZED_HTTP_RESPONSE;
-		}
-		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
-		tokenRepo.closeConnection();
-		response.addCookie(createAuthCookie(REFRESH_TOKEN_NAME, null, 0));
-		response.addCookie(createAuthCookie(ACCESS_TOKEN_NAME, null, 0));
-		return ResponseEntity.status(HttpStatus.OK).body(null);
-	}
-	
-	private String generateSecureRandomString(int length) {
-		SecureRandom randomProvider = new SecureRandom();
-		StringBuilder stringBuilder = new StringBuilder();
-		for(int i=0; i < length; i++) {
-			stringBuilder.append(ALPHA_NUM_CHARS.charAt(randomProvider.nextInt(ALPHA_NUM_CHARS.length())));
-		}
-		return stringBuilder.toString();
-	}
-	
-	private Cookie createAuthCookie(String name, String value, int expires) {
-		Cookie cookie = new Cookie(name, value);
-		cookie.setMaxAge(expires);
-		cookie.setPath("/");
-		cookie.setHttpOnly(true);
-		return cookie;
-	}
 }

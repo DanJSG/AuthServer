@@ -36,7 +36,7 @@ function LoginPage() {
     const sendLoginRequest = (email, password) => {
         console.log(state);
         console.log(codeChallenge.code_challenge);
-        const url = `http://local.courier.net:8080/api/auth/authorize?code_challenge=${codeChallenge.code_challenge}&response_type=${params.response_type}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&state=${state}&code_challenge_method=${codeChallenge.code_challenge_method}`;
+        const url = `http://local.courier.net:8080/api/v1/authorize?code_challenge=${codeChallenge.code_challenge}&response_type=${params.response_type}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&state=${state}&code_challenge_method=${codeChallenge.code_challenge_method}`;
         const credentials = JSON.stringify({credentials: btoa(JSON.stringify({email: email, password: password}))})
         fetch(url, {
             method: "POST",
