@@ -46,6 +46,7 @@ public final class AuthController {
 	private static final String REFRESH_TOKEN_NAME = "ref.tok";
 	private static final String ACCESS_TOKEN_NAME = "acc.tok";
 	private static final String CODE_CHALLENGE_METHOD = "S256";
+	private static final ResponseEntity<String> UNAUTHORIZED_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 	
 	private final int accessExpiryTime;
 	private final int refreshExpiryTime;
@@ -79,32 +80,31 @@ public final class AuthController {
 			@RequestParam String response_type, @RequestParam String redirect_uri,
 			@RequestParam String client_id, @RequestParam String code_challenge_method,
 			HttpServletResponse response) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		if(!code_challenge_method.contentEquals(CODE_CHALLENGE_METHOD)) {
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		LoginCredentials credentials = new LoginCredentials(body);
 		UserRepository userRepo = new UserRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		User user = new User(credentials.getEmail(), credentials.getPassword());
 		if(!user.verifyCredentials(userRepo)) {
 			userRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		userRepo.closeConnection();
 		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord(appRepo)) {
 			appRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		appRepo.closeConnection();
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
 		if(!challenge.save(sqlConnectionString, sqlUsername, sqlPassword)) {
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
 		if(!authCode.save(sqlConnectionString, sqlUsername, sqlPassword)) {
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
 	}
@@ -115,29 +115,28 @@ public final class AuthController {
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
 			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
 			@RequestParam(required=false) String refresh_token, @RequestParam String client_id,
-			@RequestParam String grant_type, @CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); 
+			@RequestParam String grant_type, @CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
+					throws Exception {
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
 			case REFRESH_TOKEN_GRANT_TYPE:
 				return getAccessToken(client_id, refresh_token, refreshCookie, response);
 			default:
-				return unauthorizedResponse;
+				return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 	}
 	
 	private ResponseEntity<String> getAccessToken(String client_id, String refresh_token,
 			String refreshCookie, HttpServletResponse response) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		if(refresh_token == null || refreshCookie == null) {
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		TokenPairRepository tokenRepo = new TokenPairRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		TokenPair tokenPair = new TokenPair(client_id, refreshCookie, refresh_token);
 		if(!tokenPair.verifyRefreshTokens(tokenRepo, refreshSecret)) {
 			tokenRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		tokenRepo.closeConnection();
 		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), accessSecret, accessExpiryTime);
@@ -150,29 +149,28 @@ public final class AuthController {
 	
 	private ResponseEntity<String> getRefreshTokenWithAuthCode(String code, String state, String client_id, String redirect_uri,
 			String code_verifier, HttpServletResponse response) throws Exception {
-		ResponseEntity<String> unauthorizedResponse = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord(appRepo)) {
 			appRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		appRepo.closeConnection();
 		AuthCodeRepository authRepo = new AuthCodeRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		AuthCode authCode = new AuthCode(client_id, code);
 		if(!authCode.verifyAuthCode(authRepo)) {
 			authRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		authRepo.closeConnection();
 		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(sqlConnectionString, sqlUsername, sqlPassword);
 		CodeChallenge challenge = new CodeChallenge(client_id, state);
 		if(!challenge.verifyCodeChallenge(challengeRepo, code_verifier)) {
 			challengeRepo.closeConnection();
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		challengeRepo.closeConnection();
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), refreshSecret, refreshExpiryTime);
@@ -180,7 +178,7 @@ public final class AuthController {
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
 		if(!tokenPair.save(sqlConnectionString, sqlUsername, sqlPassword)) {
 			System.out.println("Problem saving tokens");
-			return unauthorizedResponse;
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		response.addCookie(createAuthCookie(REFRESH_TOKEN_NAME, cookieToken, refreshExpiryTime));
 		Map<String, String> responseBody = new HashMap<>();
@@ -196,7 +194,7 @@ public final class AuthController {
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, token);
 		if(!tokenPair.verifyRefreshTokens(tokenRepo, refreshSecret)) {
 			tokenRepo.closeConnection();
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
 		tokenRepo.closeConnection();
