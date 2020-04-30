@@ -46,6 +46,13 @@ public class User {
 		this.password = null;
 	}
 	
+	public Boolean save(String connectionString, String username, String password) throws Exception {
+		UserRepository repo = new UserRepository(connectionString, username, password);
+		Boolean isSaved = repo.save(this);
+		repo.closeConnection();
+		return isSaved;
+	}
+	
 	public Boolean verifyCredentials(UserRepository userRepo) throws Exception {
 		List<User> results = userRepo.findWhereEqual("email", email, 1);
 		if(results == null || results.size() < 1) {
