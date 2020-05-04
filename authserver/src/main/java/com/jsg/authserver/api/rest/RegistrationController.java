@@ -3,6 +3,7 @@ package com.jsg.authserver.api.rest;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jsg.authserver.datatypes.User;
-import com.jsg.authserver.repositories.UserRepository;
+import com.jsg.authserver.datatypes.UserInfo;
 
 @RestController
 public class RegistrationController extends ApiController {
@@ -23,14 +24,36 @@ public class RegistrationController extends ApiController {
 	}
 
 	@PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<String> createAccount(@RequestBody String email, @RequestBody String password, 
+	public @ResponseBody ResponseEntity<String> register(@RequestBody String email, @RequestBody String password, 
 			@RequestBody String username) 
 			throws Exception {
 		if(email == null || password == null || username == null || !EmailValidator.getInstance().isValid(email)) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		createUser(email, password);
-		return UNAUTHORIZED_HTTP_RESPONSE;
+		if(!createAccount(email, password, username)) {
+			return BAD_REQUEST_HTTP_RESPONSE;
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(null);
+	}
+	
+	private Boolean createAccount(String email, String password, String username) throws Exception {
+		User user = createUser(email, password);
+		if(user == null) {
+			return false;
+		}
+		UserInfo info = createUserInfo(user.getId(), username);
+		if(info == null) {
+			return false;
+		}
+		return true;
+	}
+	
+	private UserInfo createUserInfo(long id, String username) throws Exception {
+		UserInfo info = new UserInfo(id, username);
+		if(info.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+			return null;
+		}
+		return info;
 	}
 
 	private User createUser(String email, String password) throws Exception {
@@ -39,9 +62,6 @@ public class RegistrationController extends ApiController {
 		if(!user.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			return null;
 		}
-		UserRepository repo = new UserRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
-		user = repo.findWhereEqual("email", "value", 1).get(0);
-		repo.closeConnection();
 		return user;
 	}
 	

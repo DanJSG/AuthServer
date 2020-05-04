@@ -10,11 +10,13 @@ function LoginPage() {
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
     const [params] = useState(() => {
-        let queryArray = location.search.substring(1).split("&")
-        const newParams = {}
+        let queryArray = location.search.substring(1).split("&");
+        const newParams = {};
         queryArray.forEach((term) => {
             const pair = term.split("=");
-            newParams[pair[0]] = pair[1].replace(/[+]/g, " ");
+            if(pair.length === 2) {
+                newParams[pair[0]] = pair[1].replace(/[+]/g, " ");
+            }
         })
         return newParams;
     });
@@ -78,8 +80,6 @@ function LoginPage() {
     }
 
     const redirectToCallback = () => {
-        // const uriString = `${params.redirect_uri}?code=${authCode}&state=${state}`;
-        // console.log(uriString);
         window.location.href = `${params.redirect_uri}?code=${authCode}&state=${state}&client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&code_verifier=${codeChallenge.code_verifier}`;
     }
 
@@ -103,7 +103,7 @@ function LoginPage() {
                                 </div>
                                 <div className="form-group">
                                 <label className="form-text">
-                                    Not got an account yet? <Link className="link text-decoration-none" to="/sign-up">Sign up here.</Link>
+                                    Not got an account yet? <Link className="link text-decoration-none" to="/oauth2/register">Sign up here.</Link>
                                 </label>
                                 </div>
                             </form>

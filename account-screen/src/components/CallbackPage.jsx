@@ -78,9 +78,7 @@ function CallbackPage() {
         requestRefreshToken();
     }, [])
 
-    return(
-        <div></div>
-    );
+    return;
 
 }
 

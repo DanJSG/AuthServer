@@ -49,6 +49,8 @@ public class User {
 	public Boolean save(String connectionString, String username, String password) throws Exception {
 		UserRepository repo = new UserRepository(connectionString, username, password);
 		Boolean isSaved = repo.save(this);
+		User user = repo.findWhereEqual("email", email).get(0);
+		id = user.getId();
 		repo.closeConnection();
 		return isSaved;
 	}

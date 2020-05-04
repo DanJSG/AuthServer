@@ -2,7 +2,8 @@ import React from 'react';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import CallbackPage from './components/CallbackPage';
-import LogoutPage from './components/LogoutPage.jsx';
+import LogoutPage from './components/LogoutPage';
+import SignUpPage from './components/SignUpPage'
 import './stylesheets/BootstrapCustom.scss';
 
 function App() {
@@ -17,6 +18,9 @@ function App() {
         </Route>
         <Route exact path="/">
           <LogoutPage></LogoutPage>
+        </Route>
+        <Route exact path="/oauth2/register">
+          <SignUpPage></SignUpPage>
         </Route>
       </Switch>
     </Router>
