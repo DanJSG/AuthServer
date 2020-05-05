@@ -65,7 +65,7 @@ function LoginPage() {
         })
         .catch((error) => {
             console.log(`Fetch error: ${error}`);
-            setFormError("An error when contacting the authorization server.");
+            setFormError("An error occurred when contacting the authorization server.");
         })
     }
 

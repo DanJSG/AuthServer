@@ -18,9 +18,10 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
 	
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/api/auth/authorize*").allowCredentials(true).allowedOrigins(origins);
-		registry.addMapping("/api/auth/token*").allowCredentials(true).allowedOrigins(origins);
-		registry.addMapping("/api/auth/revoke*").allowCredentials(true).allowedOrigins(origins);
+		registry.addMapping("/api/v1/authorize*").allowCredentials(true).allowedOrigins(origins);
+		registry.addMapping("/api/v1/token*").allowCredentials(true).allowedOrigins(origins);
+		registry.addMapping("/api/v1/revoke*").allowCredentials(true).allowedOrigins(origins);
+		registry.addMapping("/api/v1/register*").allowCredentials(true).allowedOrigins(origins);
 	}
 	
 }

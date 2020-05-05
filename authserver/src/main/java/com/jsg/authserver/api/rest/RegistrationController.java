@@ -1,5 +1,7 @@
 package com.jsg.authserver.api.rest;
 
+import java.util.Map;
+
 import org.apache.commons.validator.routines.EmailValidator;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +26,11 @@ public class RegistrationController extends ApiController {
 	}
 
 	@PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public @ResponseBody ResponseEntity<String> register(@RequestBody String email, @RequestBody String password, 
-			@RequestBody String username) 
+	public @ResponseBody ResponseEntity<String> register(@RequestBody Map<String, String> accountMap) 
 			throws Exception {
+		String email = accountMap.get("email");
+		String password = accountMap.get("password");
+		String username = accountMap.get("username");
 		if(email == null || password == null || username == null || !EmailValidator.getInstance().isValid(email)) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -50,7 +54,7 @@ public class RegistrationController extends ApiController {
 	
 	private UserInfo createUserInfo(long id, String username) throws Exception {
 		UserInfo info = new UserInfo(id, username);
-		if(info.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		if(!info.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			return null;
 		}
 		return info;
