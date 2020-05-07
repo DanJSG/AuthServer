@@ -1,10 +1,10 @@
 import React from 'react';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
-import LoginPage from './components/LoginPage';
-import CallbackPage from './components/CallbackPage';
+import LoginPage from './components/LoginPage/LoginPage';
+import CallbackPage from './components/CallbackPage/CallbackPage';
 import LogoutPage from './components/LogoutPage';
-import SignUpPage from './components/SignUpPage'
-import './stylesheets/BootstrapCustom.scss';
+import SignUpPage from './components/SignUpPage/SignUpPage'
+import './App.scss';
 
 function App() {
   return (
