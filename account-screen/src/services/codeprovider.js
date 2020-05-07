@@ -15,14 +15,9 @@ const b64urlEncode = (value) => {
     return btoa(value).replace(/\//g, "_").replace(/\+/g, "-").replace(/=/g, "");
 }
 
-const generateCodeChallenge = () => {
+export const generateCodeChallenge = () => {
     const length = Math.floor(Math.random() * 86) + 43;
-    console.log("Char length: " + length);
     const codeVerifier = generateSecureString(length);
-    console.log("Code verifier: " + codeVerifier);
-    console.log("Hashed: " + SHA256(codeVerifier).toString());
-    console.log("Base64: " + btoa(SHA256(codeVerifier).toString()));
-    console.log("Base64url: " + b64urlEncode(SHA256(codeVerifier).toString()));
     return {
         code_verifier: codeVerifier,
         code_challenge: b64urlEncode(SHA256(codeVerifier).toString()),
@@ -30,8 +25,6 @@ const generateCodeChallenge = () => {
     };
 }
 
-const generateState = () => {
+export const generateState = () => {
     return generateSecureString(12);
 }
-
-export {generateCodeChallenge, generateState}

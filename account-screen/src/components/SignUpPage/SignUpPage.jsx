@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Link} from 'react-router-dom';
 import {checkForm, sendRegistrationRequest} from './services/signupservice';
 import {sendLoginRequest} from '../LoginPage/services/loginservice';
-import {generateState, generateCodeChallenge} from '../codeGen';
+import {generateState, generateCodeChallenge} from '../../services/codeprovider';
 
 function SignUpPage() {
 

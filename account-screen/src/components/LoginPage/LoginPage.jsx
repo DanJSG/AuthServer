@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
-import {generateCodeChallenge, generateState} from '../codeGen'
+import {generateCodeChallenge, generateState} from '../../services/codeprovider'
 import {checkLoginForm, sendLoginRequest} from './services/loginservice';
+import LoginForm from './LoginForm/LoginForm';
 
 // local.courier.net:3000/oauth2/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=http://local.courier.net:3000/oauth2/auth_callback
 
@@ -53,30 +54,7 @@ function LoginPage() {
     return(
         <div className="container-fluid inherit-height">
             {authCode === null ? 
-                <div className="row align-items-center justify-content-center inherit-height">
-                    <div className="col-3">
-                        <div>
-                            <h1 className="mb-4">Sign In</h1>
-                            <form onSubmit={handleLogin}>
-                                <div className="form-group">
-                                    <input className="form-control input-hover" type="email" name="email" placeholder="Email address"></input>
-                                </div>
-                                <div className="form-group">
-                                    <input className="form-control input-hover" type="password" name="password" placeholder="Password"></input>
-                                    {formError && <label className="form-text">{formError}</label>}
-                                </div>
-                                <div className="form-group">
-                                    <button id="signInButton" className="btn btn-primary">Sign In</button>
-                                </div>
-                                <div className="form-group">
-                                <label className="form-text">
-                                    Not got an account yet? <Link className="link text-decoration-none" to="/oauth2/register">Sign up here.</Link>
-                                </label>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                <LoginForm handleLogin={handleLogin} formError={formError} />
                 :
                 redirectToCallback()
             }
