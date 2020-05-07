@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {Link, useLocation} from 'react-router-dom'
 import {generateCodeChallenge, generateState} from '../../services/codeprovider'
 import {checkLoginForm, sendLoginRequest} from './services/loginservice';
-import LoginForm from './LoginForm/LoginForm';
+import LoginForm from './Forms/LoginForm';
 
 // local.courier.net:3000/oauth2/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=http://local.courier.net:3000/oauth2/auth_callback
 
