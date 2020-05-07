@@ -17,11 +17,9 @@ export const sendRegistrationRequest = async (email, username, password) => {
         if(response.status !== 200) {
             return "Failed to create account.";
         }
-        console.log(response);
         return null;
     })
     .catch((error) => {
-        console.log(`Fetch error: ${error}`);
         return "An error occurred when contacting the server.";
     });
 }
@@ -36,7 +34,7 @@ export const checkForm = (email, username, password, repeatPassword) => {
     if(password === undefined || password === null || password === "") {
         return "Please enter a password.";
     }
-    if(password.length < 9) {
+    if(password.length < 8) {
         return "Your password must be at least 8 characters long.";
     }
     if(password !== repeatPassword) {

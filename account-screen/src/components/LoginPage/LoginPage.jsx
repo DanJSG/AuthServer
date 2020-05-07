@@ -10,6 +10,8 @@ function LoginPage() {
     const location = useLocation();
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
+    const [state] = useState(generateState());
+    const [codeChallenge] = useState(generateCodeChallenge());
     const [params] = useState(() => {
         let queryArray = location.search.substring(1).split("&");
         const newParams = {};
@@ -21,8 +23,6 @@ function LoginPage() {
         })
         return newParams;
     });
-    const [state] = useState(generateState());
-    const [codeChallenge] = useState(generateCodeChallenge());
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -52,9 +52,9 @@ function LoginPage() {
 
     return(
         <div className="container-fluid inherit-height">
-            <div className="row align-items-center justify-content-center inherit-height">
-                <div className="col-3">
-                    {authCode === null ? 
+            {authCode === null ? 
+                <div className="row align-items-center justify-content-center inherit-height">
+                    <div className="col-3">
                         <div>
                             <h1 className="mb-4">Sign In</h1>
                             <form onSubmit={handleLogin}>
@@ -75,11 +75,11 @@ function LoginPage() {
                                 </div>
                             </form>
                         </div>
-                        :
-                        redirectToCallback()
-                    }
+                    </div>
                 </div>
-            </div>
+                :
+                redirectToCallback()
+            }
         </div>
     );
 }
