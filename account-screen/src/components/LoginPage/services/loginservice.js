@@ -9,8 +9,6 @@ export const checkLoginForm = (email, password) => {
 }
 
 export const sendLoginRequest = async (email, password, params, codeChallenge, state) => {
-    console.log(state);
-    console.log(codeChallenge.code_challenge);
     const url = `http://local.courier.net:8080/api/v1/authorize` + 
                 `?code_challenge=${codeChallenge.code_challenge}` + 
                 `&response_type=${params.response_type}` + 

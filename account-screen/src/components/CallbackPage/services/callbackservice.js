@@ -19,8 +19,6 @@ const requestRefreshToken = (params) => {
         return response.json();
     })
     .then((json) => {
-        console.log(json);
-        console.log(json.token);
         localStorage.setItem("ref.tok", json.token);
         requestAccessToken(params.client_id, json.token);
     })
@@ -48,8 +46,6 @@ const requestAccessToken = (client_id, refresh_token) => {
         return response.json();
     })
     .then((json) => {
-        console.log(json);
-        console.log(json.token);
         localStorage.setItem("acc.tok", json.token);
         window.location.href = "http://local.courier.net:3000";
     })

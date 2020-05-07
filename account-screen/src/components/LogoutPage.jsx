@@ -15,7 +15,6 @@ function LogoutPage() {
         })
         .then((response) => {
             if(response.status !== 200) {
-                console.log("Failed to revoke token.");
                 return;
             }
             localStorage.removeItem("ref.tok");
