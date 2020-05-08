@@ -3,6 +3,7 @@ import {useLocation} from 'react-router-dom'
 import {generateCodeChallenge, generateState} from '../../services/codeprovider'
 import {checkLoginForm, sendLoginRequest} from './services/loginservice';
 import LoginForm from './Forms/LoginForm';
+import {getQueryStringAsJson} from '../../services/querystringmanipulator';
 
 // local.courier.net:3000/oauth2/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=http://local.courier.net:3000/oauth2/auth_callback
 
@@ -13,17 +14,7 @@ function LoginPage() {
     const [formError, setFormError] = useState(null);
     const [state] = useState(generateState());
     const [codeChallenge] = useState(generateCodeChallenge());
-    const [params] = useState(() => {
-        let queryArray = location.search.substring(1).split("&");
-        const newParams = {};
-        queryArray.forEach((term) => {
-            const pair = term.split("=");
-            if(pair.length === 2) {
-                newParams[pair[0]] = pair[1].replace(/[+]/g, " ");
-            }
-        })
-        return newParams;
-    });
+    const [params] = useState(getQueryStringAsJson(location));
 
     const handleLogin = async (e) => {
         e.preventDefault();
