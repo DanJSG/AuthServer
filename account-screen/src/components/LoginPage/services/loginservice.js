@@ -8,14 +8,14 @@ export const checkLoginForm = (email, password) => {
     return null;
 }
 
-export const sendLoginRequest = async (email, password, params, codeChallenge, state) => {
-    const url = `http://local.courier.net:8080/api/v1/authorize` + 
-                `?code_challenge=${codeChallenge.code_challenge}` + 
+export const sendLoginRequest = async (email, password, params) => {
+    const url = `http://local.courier.net:8090/api/v1/authorize` + 
+                `?code_challenge=${params.code_challenge}` + 
                 `&response_type=${params.response_type}` + 
                 `&client_id=${params.client_id}` + 
                 `&redirect_uri=${params.redirect_uri}` + 
-                `&state=${state}` + 
-                `&code_challenge_method=${codeChallenge.code_challenge_method}`;
+                `&state=${params.state}` + 
+                `&code_challenge_method=${params.code_challenge_method}`;
     const credentials = JSON.stringify({
         credentials: btoa(JSON.stringify({
             email: email,

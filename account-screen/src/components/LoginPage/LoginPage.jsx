@@ -12,8 +12,6 @@ function LoginPage() {
     const location = useLocation();
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
-    const [state] = useState(generateState());
-    const [codeChallenge] = useState(generateCodeChallenge());
     const [params] = useState(getQueryStringAsJson(location));
 
     const handleLogin = async (e) => {
@@ -26,7 +24,7 @@ function LoginPage() {
             setFormError(error);
             return;
         }
-        const response = await sendLoginRequest(email, password, params, codeChallenge, state);
+        const response = await sendLoginRequest(email, password, params);
         if(response.error !== null) {
             setFormError(response.error);
             return;
@@ -35,11 +33,10 @@ function LoginPage() {
     }
 
     const redirectToCallback = () => {
-        window.location.href = `${params.redirect_uri}?code=${authCode}` + 
-                                `&state=${state}` + 
+        window.location.href = `${params.redirect_uri}` +
+                                `?code=${authCode}` + 
                                 `&client_id=${params.client_id}` + 
-                                `&redirect_uri=${params.redirect_uri}` + 
-                                `&code_verifier=${codeChallenge.code_verifier}`;
+                                `&redirect_uri=${params.redirect_uri}`;
     }
 
     return(

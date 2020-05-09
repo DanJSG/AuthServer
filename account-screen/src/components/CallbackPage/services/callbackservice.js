@@ -1,5 +1,5 @@
 const requestRefreshToken = (params) => {
-    const url = `http://local.courier.net:8080/api/v1/token` +
+    const url = `http://local.courier.net:8090/api/v1/token` +
                 `?client_id=${params.client_id}` + 
                 `&state=${params.state}` +
                 `&code=${params.code}` +
@@ -29,7 +29,7 @@ const requestRefreshToken = (params) => {
 
 const requestAccessToken = (client_id, refresh_token) => {
     console.log("Requesting access token with: " + refresh_token);
-    const url = `http://local.courier.net:8080/api/v1/token` +
+    const url = `http://local.courier.net:8090/api/v1/token` +
                 `?client_id=${client_id}` + 
                 `&refresh_token=${refresh_token}` + 
                 `&grant_type=refresh_token`;
