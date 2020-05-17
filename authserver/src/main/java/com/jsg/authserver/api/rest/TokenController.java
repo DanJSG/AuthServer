@@ -72,8 +72,8 @@ public final class TokenController extends ApiController {
 		tokenRepo.closeConnection();
 		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
+		appRepo.closeConnection();
 		if(appList == null || appList.size() < 1) {
-			appRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AppAuthRecord app = appList.get(0);

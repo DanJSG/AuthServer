@@ -15,6 +15,7 @@ public class AppAuthRecord {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.clientSecret = clientSecret;
+		this.accessTokenSecret = accessTokenSecret;
 	}
 	
 	public AppAuthRecord(String clientId, String redirectUri) {

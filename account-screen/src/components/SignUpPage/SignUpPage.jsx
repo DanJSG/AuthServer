@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {checkForm, sendRegistrationRequest} from './services/signupservice';
 import {sendLoginRequest} from '../LoginPage/services/loginservice';
-import {generateState, generateCodeChallenge} from '../../services/codeprovider';
+import {generateState, generateCodeChallenge} from '../../services/challengeservice';
 import SignUpForm from './Forms/SignUpForm';
 
 function SignUpPage() {

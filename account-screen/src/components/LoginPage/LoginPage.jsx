@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
-import {useLocation} from 'react-router-dom'
-import {generateCodeChallenge, generateState} from '../../services/codeprovider'
+import {useLocation} from 'react-router-dom';
 import {checkLoginForm, sendLoginRequest} from './services/loginservice';
 import LoginForm from './Forms/LoginForm';
 import {getQueryStringAsJson} from '../../services/querystringmanipulator';
