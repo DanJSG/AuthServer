@@ -21,6 +21,7 @@ public class AppAuthRecordRepository extends MySQLRepository implements SQLRepos
 		valueMap.put("client_id", item.getClientId());
 		valueMap.put("redirect_uri", item.getRedirectUri());
 		valueMap.put("client_secret", item.getClientSecret());
+		valueMap.put("accessTokenSecret", item.getAccessTokenSecret());
 		try {
 			super.save(valueMap);
 			return true;
@@ -44,7 +45,8 @@ public class AppAuthRecordRepository extends MySQLRepository implements SQLRepos
 				records.add(new AppAuthRecord(
 						results.getString("client_id"),
 						results.getString("redirect_uri"),
-						results.getString("client_secret")));
+						results.getString("client_secret"),
+						results.getString("access_token_secret")));
 			}
 			if(records.size() == 0) {
 				return null;

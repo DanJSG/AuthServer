@@ -9,15 +9,16 @@ public class AppAuthRecord {
 	private String clientId;
 	private String redirectUri;
 	private String clientSecret;
+	private String accessTokenSecret;
 	
-	public AppAuthRecord(String clientId, String redirectUri, String clientSecret) {
+	public AppAuthRecord(String clientId, String redirectUri, String clientSecret, String accessTokenSecret) {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.clientSecret = clientSecret;
 	}
 	
 	public AppAuthRecord(String clientId, String redirectUri) {
-		this(clientId, redirectUri, null);
+		this(clientId, redirectUri, null, null);
 	}
 	
 	public String getClientId() {
@@ -30,6 +31,10 @@ public class AppAuthRecord {
 	
 	public String getClientSecret() {
 		return this.clientSecret;
+	}
+	
+	public String getAccessTokenSecret() {
+		return this.accessTokenSecret;
 	}
 	
 	public Boolean verifyAppAuthRecord(AppAuthRecordRepository appRepo) throws Exception {

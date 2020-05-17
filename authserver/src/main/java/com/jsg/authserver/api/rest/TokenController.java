@@ -1,6 +1,7 @@
 package com.jsg.authserver.api.rest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -33,11 +34,10 @@ public final class TokenController extends ApiController {
 	public TokenController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
 							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${token.secret.access}") String accessTokenSecret,
 							@Value("${sql.username}") String sqlUsername,
 							@Value("${sql.password}") String sqlPassword,
 							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, accessTokenSecret,
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
 				sqlUsername, sqlPassword, sqlConnectionString);
 	}
 	
@@ -70,8 +70,15 @@ public final class TokenController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		tokenRepo.closeConnection();
-		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY_TIME);
-		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY_TIME);
+		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
+		if(appList == null || appList.size() < 1) {
+			appRepo.closeConnection();
+			return UNAUTHORIZED_HTTP_RESPONSE;
+		}
+		AppAuthRecord app = appList.get(0);
+		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
 		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);

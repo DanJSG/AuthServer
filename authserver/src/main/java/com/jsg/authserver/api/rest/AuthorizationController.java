@@ -32,11 +32,10 @@ public final class AuthorizationController extends ApiController {
 	public AuthorizationController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
 							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${token.secret.access}") String accessTokenSecret,
 							@Value("${sql.username}") String sqlUsername,
 							@Value("${sql.password}") String sqlPassword,
 							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, accessTokenSecret,
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
 				sqlUsername, sqlPassword, sqlConnectionString);
 	}
 	

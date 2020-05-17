@@ -22,18 +22,15 @@ public abstract class ApiController {
 	protected final int ACCESS_TOKEN_EXPIRY_TIME;
 	protected final int REFRESH_TOKEN_EXPIRY_TIME;
 	protected final String REFRESH_TOKEN_SECRET;
-	protected final String ACCESS_TOKEN_SECRET;
 	protected final String SQL_USERNAME;
 	protected final String SQL_PASSWORD;
 	protected final String SQL_CONNECTION_STRING;
 	
 	@Autowired
 	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
-							String refreshTokenSecret, String accessTokenSecret,
-							String sqlUsername, String sqlPassword,
+							String refreshTokenSecret, String sqlUsername, String sqlPassword,
 							String sqlConnectionString) {
 		this.ACCESS_TOKEN_EXPIRY_TIME = accessTokenExpiryTime;
-		this.ACCESS_TOKEN_SECRET = accessTokenSecret;
 		this.REFRESH_TOKEN_EXPIRY_TIME = refreshTokenExpiryTime;
 		this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
 		this.SQL_CONNECTION_STRING = sqlConnectionString;
@@ -43,7 +40,6 @@ public abstract class ApiController {
 	
 	protected ApiController(String sqlUsername, String sqlPassword, String sqlConnectionString) {
 		this.ACCESS_TOKEN_EXPIRY_TIME = -1;
-		this.ACCESS_TOKEN_SECRET = null;
 		this.REFRESH_TOKEN_EXPIRY_TIME = -1;
 		this.REFRESH_TOKEN_SECRET = null;
 		this.SQL_CONNECTION_STRING = sqlConnectionString;

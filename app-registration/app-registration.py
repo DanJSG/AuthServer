@@ -8,14 +8,14 @@ def rand_string_gen(length):
         pw += chars[randbelow(len(chars))]
     return pw
 
-def add_app_registration(client_id, redirect_uri, client_secret, connection):
+def add_app_registration(client_id, redirect_uri, client_secret, access_token_secret, connection):
     cursor = connection.cursor()
-    data = (client_id, redirect_uri, client_secret)
+    data = (client_id, redirect_uri, client_secret, access_token_secret)
     query = (
         "INSERT INTO `auth.apps`"
-        "(client_id, redirect_uri, client_secret)"
+        "(client_id, redirect_uri, client_secret, access_token_secret)"
         "VALUES"
-        "(%s, %s, %s)"
+        "(%s, %s, %s, %s)"
     )
     cursor.execute(query, data)
     connection.commit()
@@ -28,7 +28,7 @@ client_secret = rand_string_gen(client_secret_len)
 acc_tok_secret = rand_string_gen(128)
 
 connection = mysql.connector.connect(user="localDev", password="l0c4l_d3v!", database="courier")
-add_app_registration(client_id, redirect_uri, client_secret, connection)
+add_app_registration(client_id, redirect_uri, client_secret, acc_tok_secret, connection)
 connection.close()
 
 print("Client ID is:")
