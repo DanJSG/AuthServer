@@ -26,7 +26,6 @@ public abstract class ApiController {
 	protected final String SQL_PASSWORD;
 	protected final String SQL_CONNECTION_STRING;
 	
-	@Autowired
 	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
 							String refreshTokenSecret, String sqlUsername, String sqlPassword,
 							String sqlConnectionString) {

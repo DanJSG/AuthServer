@@ -24,7 +24,7 @@ public final class JWTHandler {
 		return jwt;
 	}
 	
-	public static Boolean verifyToken(String token, String secret) {
+	private static Boolean verifyToken(String token, String secret) {
 		Algorithm algorithm = Algorithm.HMAC256(secret);
 		JWTVerifier verifier = JWT.require(algorithm).build();
 		try {
