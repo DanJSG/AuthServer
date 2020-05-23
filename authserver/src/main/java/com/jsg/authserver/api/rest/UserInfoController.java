@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
@@ -18,6 +19,7 @@ import com.jsg.authserver.repositories.UserInfoRepository;
 import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
+@RestController
 public class UserInfoController extends ApiController {
 
 	protected UserInfoController(@Value("${sql.username}") String sqlUsername,
