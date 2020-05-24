@@ -12,6 +12,7 @@ public abstract class ApiController {
 	protected static final String ALPHA_NUM_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	protected static final String AUTH_CODE_GRANT_TYPE = "authorization_code"; 
 	protected static final String REFRESH_TOKEN_GRANT_TYPE = "refresh_token";
+	protected static final String CLIENT_CREDENTIALS_GRANT_TYPE = "client_credentials";
 	protected static final String REFRESH_TOKEN_NAME = "ref.tok";
 	protected static final String ACCESS_TOKEN_NAME = "acc.tok";
 	protected static final String CODE_CHALLENGE_METHOD = "S256";

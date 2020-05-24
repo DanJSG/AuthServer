@@ -10,16 +10,19 @@ public class AppAuthRecord {
 	private String redirectUri;
 	private String clientSecret;
 	private String accessTokenSecret;
+	private long associatedAccountId;
 	
-	public AppAuthRecord(String clientId, String redirectUri, String clientSecret, String accessTokenSecret) {
+	public AppAuthRecord(String clientId, String redirectUri, String clientSecret, 
+			String accessTokenSecret, long associatedAccountId) {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.clientSecret = clientSecret;
 		this.accessTokenSecret = accessTokenSecret;
+		this.associatedAccountId = associatedAccountId;
 	}
 	
 	public AppAuthRecord(String clientId, String redirectUri) {
-		this(clientId, redirectUri, null, null);
+		this(clientId, redirectUri, null, null, -1);
 	}
 	
 	public String getClientId() {
@@ -36,6 +39,10 @@ public class AppAuthRecord {
 	
 	public String getAccessTokenSecret() {
 		return this.accessTokenSecret;
+	}
+	
+	public long getAssociatedAccountId() {
+		return this.associatedAccountId;
 	}
 	
 	public Boolean verifyAppAuthRecord(AppAuthRecordRepository appRepo) throws Exception {

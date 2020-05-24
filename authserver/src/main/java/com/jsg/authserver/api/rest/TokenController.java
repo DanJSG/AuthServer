@@ -45,17 +45,41 @@ public final class TokenController extends ApiController {
 	public @ResponseBody ResponseEntity<String> token(HttpServletResponse response,
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
 			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
-			@RequestParam(required=false) String refresh_token, @RequestParam String client_id,
-			@RequestParam String grant_type, @CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
+			@RequestParam(required=false) String refresh_token, @RequestParam(required=false) String client_secret,
+			@RequestParam String client_id, @RequestParam String grant_type, 
+			@CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
 					throws Exception {
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
 			case REFRESH_TOKEN_GRANT_TYPE:
 				return getAccessToken(client_id, refresh_token, refreshCookie, response);
+			case CLIENT_CREDENTIALS_GRANT_TYPE:
+				return getAccessTokenWithClientCredentials(client_id, client_secret, response);
 			default:
 				return UNAUTHORIZED_HTTP_RESPONSE;
 		}
+	}
+	
+	private ResponseEntity<String> getAccessTokenWithClientCredentials(String client_id, String client_secret,
+			HttpServletResponse response) throws Exception {
+		AppAuthRecordRepository repo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		List<AppAuthRecord> appList = repo.findWhereEqual("client_id", client_id);
+		if(appList == null || appList.size() < 1) {
+			return BAD_REQUEST_HTTP_RESPONSE;
+		}
+		AppAuthRecord app = appList.get(0);
+		if(!app.getClientSecret().contentEquals(client_secret)) {
+			return UNAUTHORIZED_HTTP_RESPONSE;
+		}
+		String cookieToken = JWTHandler.createToken(app.getAssociatedAccountId(), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(app.getAssociatedAccountId(), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
+		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
+		Map<String, String> responseBody = new HashMap<>();
+		responseBody.put("token", headerToken); 
+		ResponseEntity<String> mainResponse = ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
+		System.out.println(mainResponse);
+		return mainResponse;
 	}
 	
 	private ResponseEntity<String> getAccessToken(String client_id, String refresh_token,

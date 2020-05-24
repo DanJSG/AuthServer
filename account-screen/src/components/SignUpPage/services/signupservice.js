@@ -1,5 +1,5 @@
 export const sendRegistrationRequest = async (email, username, password) => {
-    const url = `http://local.courier.net:8080/api/v1/register`;
+    const url = `http://local.courier.net:8090/api/v1/register`;
     const details = JSON.stringify({
         email: email,
         password: password,
