@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
 import com.jsg.authserver.datatypes.AuthCode;
@@ -53,7 +54,7 @@ public final class TokenController extends ApiController {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
 			case REFRESH_TOKEN_GRANT_TYPE:
-				return getAccessToken(client_id, refresh_token, refreshCookie, response);
+				return getAccessTokenWithRefreshToken(client_id, refresh_token, refreshCookie, response);
 			case CLIENT_CREDENTIALS_GRANT_TYPE:
 				return getAccessTokenWithClientCredentials(client_id, client_secret, response);
 			default:
@@ -72,17 +73,10 @@ public final class TokenController extends ApiController {
 		if(!app.getClientSecret().contentEquals(client_secret)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		String cookieToken = JWTHandler.createToken(app.getAssociatedAccountId(), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
-		String headerToken = JWTHandler.createToken(app.getAssociatedAccountId(), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
-		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
-		Map<String, String> responseBody = new HashMap<>();
-		responseBody.put("token", headerToken); 
-		ResponseEntity<String> mainResponse = ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().writeValueAsString(responseBody));
-		System.out.println(mainResponse);
-		return mainResponse;
+		return getAccessToken(app.getAssociatedAccountId(), app.getAccessTokenSecret(), response);
 	}
 	
-	private ResponseEntity<String> getAccessToken(String client_id, String refresh_token,
+	private ResponseEntity<String> getAccessTokenWithRefreshToken(String client_id, String refresh_token,
 			String refreshCookie, HttpServletResponse response) throws Exception {
 		if(refresh_token == null || refreshCookie == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
@@ -98,11 +92,18 @@ public final class TokenController extends ApiController {
 		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
 		appRepo.closeConnection();
 		if(appList == null || appList.size() < 1) {
-			return UNAUTHORIZED_HTTP_RESPONSE;
+			return BAD_REQUEST_HTTP_RESPONSE;
 		}
 		AppAuthRecord app = appList.get(0);
-		String cookieToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refreshCookie), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
-		String headerToken = JWTHandler.createToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), ACCESS_TOKEN_EXPIRY_TIME);
+		return getAccessToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), response);
+	}
+	
+	private ResponseEntity<String> getAccessToken(long id, String secret, HttpServletResponse response) throws JsonProcessingException {
+		if(id < 0 || secret == null || response == null) {
+			return BAD_REQUEST_HTTP_RESPONSE;
+		}
+		String cookieToken = JWTHandler.createToken(id, secret, ACCESS_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(id, secret, ACCESS_TOKEN_EXPIRY_TIME);
 		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);
