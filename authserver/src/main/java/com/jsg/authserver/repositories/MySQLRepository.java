@@ -50,7 +50,7 @@ public abstract class MySQLRepository {
 	}
 	
 	protected <V> ResultSet findWhereEquals(String column, V value, String resultColumn, int limit) throws Exception {
-		String query = "SELECT " + resultColumn + " FROM courier.`" + tableName + "` WHERE " + column + "=?;";
+		String query = "SELECT " + resultColumn + " FROM `" + tableName + "` WHERE " + column + "=?;";
 		PreparedStatement statement = connection.prepareStatement(query);
 		statement.setFetchSize(limit);
 		statement.setObject(1, value);
@@ -59,7 +59,7 @@ public abstract class MySQLRepository {
 	}
 	
 	protected <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) throws Exception {
-		String query = "UPDATE courier.`" + tableName + "` SET " + updateColumn + "= ? WHERE " + clauseColumn + " = ?;";
+		String query = "UPDATE `" + tableName + "` SET " + updateColumn + "= ? WHERE " + clauseColumn + " = ?;";
 		PreparedStatement statement = connection.prepareStatement(query);
 		statement.setObject(1, updateValue);
 		statement.setObject(2, clauseValue);
