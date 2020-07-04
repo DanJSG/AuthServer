@@ -16,16 +16,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
 import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
 import com.jsg.authserver.datatypes.TokenPair;
+import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.repositories.AppAuthRecordRepository;
 import com.jsg.authserver.repositories.AuthCodeRepository;
 import com.jsg.authserver.repositories.CodeChallengeRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
+import com.jsg.authserver.repositories.UserInfoRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
@@ -98,12 +99,18 @@ public final class TokenController extends ApiController {
 		return getAccessToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), response);
 	}
 	
-	private ResponseEntity<String> getAccessToken(long id, String secret, HttpServletResponse response) throws JsonProcessingException {
+	private ResponseEntity<String> getAccessToken(long id, String secret, HttpServletResponse response) throws Exception {
 		if(id < 0 || secret == null || response == null) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		String cookieToken = JWTHandler.createToken(id, secret, ACCESS_TOKEN_EXPIRY_TIME);
-		String headerToken = JWTHandler.createToken(id, secret, ACCESS_TOKEN_EXPIRY_TIME);
+		UserInfoRepository infoRepo = new UserInfoRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		List<UserInfo> info = infoRepo.findWhereEqual("id", id);
+		if(info == null || info.size() == 0) {
+			return BAD_REQUEST_HTTP_RESPONSE;
+		}
+		String name = info.get(0).getDisplayName();
+		String cookieToken = JWTHandler.createToken(id, name, secret, ACCESS_TOKEN_EXPIRY_TIME);
+		String headerToken = JWTHandler.createToken(id, name, secret, ACCESS_TOKEN_EXPIRY_TIME);
 		response.addCookie(createCookie(ACCESS_TOKEN_NAME, cookieToken, ACCESS_TOKEN_EXPIRY_TIME));
 		Map<String, String> responseBody = new HashMap<>();
 		responseBody.put("token", headerToken);

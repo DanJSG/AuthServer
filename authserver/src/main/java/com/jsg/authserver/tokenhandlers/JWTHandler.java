@@ -13,12 +13,26 @@ public final class JWTHandler {
 	private static final long msSecond = 1000;
 	
 	public static String createToken(long id, String secret, int expirySecs) {
+		return createToken(id, null, secret, expirySecs);
+//		Algorithm algorithm = Algorithm.HMAC256(secret);
+//		int hash = Calendar.getInstance().getTime().hashCode();
+//		String jwt = JWT.create()
+//				.withIssuedAt(new Date())
+//				.withExpiresAt(new Date((Calendar.getInstance().getTimeInMillis() * msSecond) + expirySecs))
+//				.withClaim("id", id)
+//				.withClaim("hash", hash)
+//				.sign(algorithm);
+//		return jwt;
+	}
+	
+	public static String createToken(long id, String name, String secret, int expirySecs) {
 		Algorithm algorithm = Algorithm.HMAC256(secret);
 		int hash = Calendar.getInstance().getTime().hashCode();
 		String jwt = JWT.create()
 				.withIssuedAt(new Date())
 				.withExpiresAt(new Date((Calendar.getInstance().getTimeInMillis() * msSecond) + expirySecs))
 				.withClaim("id", id)
+				.withClaim("name", name)
 				.withClaim("hash", hash)
 				.sign(algorithm);
 		return jwt;
