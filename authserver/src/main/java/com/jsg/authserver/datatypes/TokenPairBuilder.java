@@ -18,10 +18,9 @@ public class TokenPairBuilder implements SQLEntityBuilder<TokenPair> {
 			boolean isExpired = sqlResults.getBoolean("expired");
 			return new TokenPair(clientId, cookieToken, headerToken, id, expires, isExpired);
 		} catch(Exception e) {
-			
+			e.printStackTrace();
+			return null;
 		}
-		
-		return null;
 	}
 
 }
