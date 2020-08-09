@@ -5,7 +5,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jsg.authserver.libs.sql.SQLEntity;
-import com.jsg.authserver.repositories.UserInfoRepository;
 
 public class UserInfo implements SQLEntity {
 
@@ -40,13 +39,6 @@ public class UserInfo implements SQLEntity {
 	
 	public String getBio() {
 		return this.bio;
-	}
-	
-	public Boolean save(String connectionString, String username, String password) throws Exception {
-		UserInfoRepository repo = new UserInfoRepository(connectionString, username, password);
-		Boolean isSaved = repo.save(this);
-		repo.closeConnection();
-		return isSaved;
 	}
 
 	@Override

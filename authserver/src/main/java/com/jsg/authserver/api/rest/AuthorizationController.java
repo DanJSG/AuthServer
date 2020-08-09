@@ -31,12 +31,8 @@ public final class AuthorizationController extends ApiController {
 	@Autowired
 	public AuthorizationController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${sql.username}") String sqlUsername,
-							@Value("${sql.password}") String sqlPassword,
-							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
-				sqlUsername, sqlPassword, sqlConnectionString);
+							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -49,22 +45,22 @@ public final class AuthorizationController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		LoginCredentials credentials = new LoginCredentials(body);
-		SQLRepository<User> userRepo = new MySQLRepository<>("users.accounts");
 		User user = new User(credentials.getEmail(), credentials.getPassword());
-		if(!user.verifyCredentials(userRepo)) {
+		if(!user.verifyCredentials()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<User> appRepo = new MySQLRepository<>("auth.apps");
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
-		if(!app.verifyAppAuthRecord(appRepo)) {
+		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		if(!challenge.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
+		if(!challengeRepo.save(challenge)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		if(!authCode.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
+		if(!authRepo.save(authCode)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());

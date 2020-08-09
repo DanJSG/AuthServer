@@ -34,12 +34,8 @@ public final class TokenController extends ApiController {
 	@Autowired
 	public TokenController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${sql.username}") String sqlUsername,
-							@Value("${sql.password}") String sqlPassword,
-							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
-				sqlUsername, sqlPassword, sqlConnectionString);
+							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	
 	@PostMapping(value = "/token")
@@ -81,9 +77,8 @@ public final class TokenController extends ApiController {
 		if(refresh_token == null || refreshCookie == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
 		TokenPair tokenPair = new TokenPair(client_id, refreshCookie, refresh_token);
-		if(!tokenPair.verifyRefreshTokens(tokenRepo, REFRESH_TOKEN_SECRET)) {
+		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
@@ -118,25 +113,23 @@ public final class TokenController extends ApiController {
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
-		if(!app.verifyAppAuthRecord(appRepo)) {
+		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
 		AuthCode authCode = new AuthCode(client_id, code);
-		if(!authCode.verifyAuthCode(authRepo)) {
+		if(!authCode.verifyAuthCode()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
 		CodeChallenge challenge = new CodeChallenge(client_id, state);
-		if(!challenge.verifyCodeChallenge(challengeRepo, code_verifier)) {
+		if(!challenge.verifyCodeChallenge(code_verifier)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
-		if(!tokenPair.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
+		if(!tokenRepo.save(tokenPair)) {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}

@@ -11,8 +11,9 @@ import org.apache.tomcat.util.codec.binary.Base64;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
+import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLEntity;
-import com.jsg.authserver.repositories.CodeChallengeRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
 public class CodeChallenge implements SQLEntity {
 	
@@ -58,15 +59,9 @@ public class CodeChallenge implements SQLEntity {
 		return new Timestamp(calendar.getTimeInMillis());
 	}
 	
-	public Boolean save(String connectionString, String username, String password) throws Exception {
-		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(connectionString, username, password);
-		Boolean isSaved = challengeRepo.save(this);
-		challengeRepo.closeConnection();
-		return isSaved;
-	}
-	
-	public Boolean verifyCodeChallenge(CodeChallengeRepository challengeRepo, String code_verifier) throws Exception {
-		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state);
+	public Boolean verifyCodeChallenge(String code_verifier) throws Exception {
+		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
+		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state, new CodeChallengeBuilder());
 		if(codeChallenges == null || codeChallenges.size() < 1) {
 			return false;
 		}

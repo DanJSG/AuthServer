@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.apache.commons.validator.routines.EmailValidator;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.datatypes.UserInfo;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
 @RestController
 public class RegistrationController extends ApiController {
 
-	protected RegistrationController(@Value("${sql.username}") String sqlUsername,
-								@Value("${sql.password}") String sqlPassword,
-								@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(sqlUsername, sqlPassword, sqlConnectionString);
+	@Autowired
+	protected RegistrationController() {
+		super();
 	}
 
 	@PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -54,7 +55,8 @@ public class RegistrationController extends ApiController {
 	
 	private UserInfo createUserInfo(long id, String username) throws Exception {
 		UserInfo info = new UserInfo(id, username);
-		if(!info.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<UserInfo> repo = new MySQLRepository<>("users.info");
+		if(!repo.save(info)) {
 			return null;
 		}
 		return info;
@@ -63,7 +65,8 @@ public class RegistrationController extends ApiController {
 	private User createUser(String email, String password) throws Exception {
 		String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
 		User user = new User(email, hashedPassword);
-		if(!user.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<User> repo = new MySQLRepository<>("users.accounts");
+		if(!repo.save(user)) {
 			return null;
 		}
 		return user;

@@ -2,7 +2,6 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.ResultSet;
 
-import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLEntityBuilder;
 
 public class AppAuthRecordBuilder implements SQLEntityBuilder<AppAuthRecord> {

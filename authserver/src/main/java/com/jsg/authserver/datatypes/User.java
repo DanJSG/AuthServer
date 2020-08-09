@@ -7,8 +7,9 @@ import java.util.Map;
 import org.mindrot.jbcrypt.BCrypt;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLEntity;
-import com.jsg.authserver.repositories.UserRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
 public class User implements SQLEntity {
 	
@@ -49,17 +50,9 @@ public class User implements SQLEntity {
 		this.password = null;
 	}
 	
-	public Boolean save(String connectionString, String username, String password) throws Exception {
-		UserRepository repo = new UserRepository(connectionString, username, password);
-		Boolean isSaved = repo.save(this);
-		User user = repo.findWhereEqual("email", email).get(0);
-		id = user.getId();
-		repo.closeConnection();
-		return isSaved;
-	}
-	
-	public Boolean verifyCredentials(UserRepository userRepo) throws Exception {
-		List<User> results = userRepo.findWhereEqual("email", email, 1);
+	public Boolean verifyCredentials() throws Exception {
+		SQLRepository<User> userRepo = new MySQLRepository<>("users.accounts");
+		List<User> results = userRepo.findWhereEqual("email", email, 1, new UserBuilder());
 		if(results == null || results.size() < 1) {
 			return false;
 		}
