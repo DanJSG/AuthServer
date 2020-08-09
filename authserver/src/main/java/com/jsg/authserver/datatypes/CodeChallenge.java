@@ -2,16 +2,19 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.CodeChallengeRepository;
 
-public class CodeChallenge {
+public class CodeChallenge implements SQLEntity {
 	
 	private String clientId;
 	private String codeChallenge;
@@ -79,6 +82,16 @@ public class CodeChallenge {
 		}
 		expires = codeChallenge.getExpiryDateTime();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("client_id", clientId);
+		map.put("code_challenge", codeChallenge);
+		map.put("state", state);
+		map.put("expires", expires);
+		return map;
 	}
 	
 }

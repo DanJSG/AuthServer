@@ -1,13 +1,16 @@
 package com.jsg.authserver.datatypes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.UserRepository;
 
-public class User {
+public class User implements SQLEntity {
 	
 	@JsonProperty
 	private long id;
@@ -67,6 +70,14 @@ public class User {
 		user.clearPassword();
 		this.id = user.getId();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("email", email);
+		map.put("password", password);
+		return map;
 	}
 	
 }

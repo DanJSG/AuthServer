@@ -2,13 +2,16 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.TokenPairRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
-public class TokenPair {
+public class TokenPair implements SQLEntity {
 	
 	private String clientId;
 	private String cookieToken;
@@ -88,6 +91,16 @@ public class TokenPair {
 		this.id = tokenPair.getId();
 		this.isExpired = tokenPair.isExpired();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("cookieToken", cookieToken);
+		map.put("headerToken", headerToken);
+		map.put("expires", expires);
+		map.put("client_id", clientId);
+		return map;
 	}
 	
 }

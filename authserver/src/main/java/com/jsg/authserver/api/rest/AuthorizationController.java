@@ -22,8 +22,8 @@ import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.User;
-import com.jsg.authserver.repositories.AppAuthRecordRepository;
-import com.jsg.authserver.repositories.UserRepository;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
 @RestController
 public final class AuthorizationController extends ApiController {
@@ -49,20 +49,16 @@ public final class AuthorizationController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		LoginCredentials credentials = new LoginCredentials(body);
-		UserRepository userRepo = new UserRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		SQLRepository<User> userRepo = new MySQLRepository<>("users.accounts");
 		User user = new User(credentials.getEmail(), credentials.getPassword());
 		if(!user.verifyCredentials(userRepo)) {
-			userRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		userRepo.closeConnection();
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		SQLRepository<User> appRepo = new MySQLRepository<>("auth.apps");
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord(appRepo)) {
-			appRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		appRepo.closeConnection();
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
 		if(!challenge.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;

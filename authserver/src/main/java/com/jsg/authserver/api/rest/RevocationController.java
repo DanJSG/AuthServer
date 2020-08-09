@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.jsg.authserver.datatypes.TokenPair;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.repositories.TokenPairRepository;
 
 @RestController
@@ -32,14 +34,12 @@ public final class RevocationController extends ApiController {
 	@PostMapping(value = "/revoke")
 	public @ResponseBody ResponseEntity<String> revoke(@CookieValue(name=REFRESH_TOKEN_NAME, required=false) String cookieToken,
 			@RequestParam String token, @RequestParam String client_id, HttpServletResponse response) throws Exception {
-		TokenPairRepository tokenRepo = new TokenPairRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, token);
 		if(!tokenPair.verifyRefreshTokens(tokenRepo, REFRESH_TOKEN_SECRET)) {
-			tokenRepo.closeConnection();
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		tokenRepo.updateWhereEquals("id", tokenPair.getId(), "expired", 1);
-		tokenRepo.closeConnection();
 		response.addCookie(createCookie(REFRESH_TOKEN_NAME, null, 0));
 		response.addCookie(createCookie(ACCESS_TOKEN_NAME, null, 0));
 		return ResponseEntity.status(HttpStatus.OK).body(null);

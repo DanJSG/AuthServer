@@ -1,10 +1,13 @@
 package com.jsg.authserver.datatypes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.AppAuthRecordRepository;
 
-public class AppAuthRecord {
+public class AppAuthRecord implements SQLEntity {
 	
 	private String clientId;
 	private String redirectUri;
@@ -56,6 +59,17 @@ public class AppAuthRecord {
 		}
 		clientSecret = app.getClientSecret();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("client_id", clientId);
+		map.put("redirect_uri", redirectUri);
+		map.put("client_secret", clientSecret);
+		map.put("access_token_secret", accessTokenSecret);
+		map.put("associated_account_id", associatedAccountId);
+		return map;
 	}
 	
 }

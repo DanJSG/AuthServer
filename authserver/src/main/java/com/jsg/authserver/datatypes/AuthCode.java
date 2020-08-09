@@ -2,12 +2,15 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.AuthCodeRepository;
 
-public class AuthCode {
+public class AuthCode implements SQLEntity {
 	
 	private long userId;
 	private String clientId;
@@ -71,6 +74,16 @@ public class AuthCode {
 		userId = authCode.getUserId();
 		expires = authCode.getExpiryDateTime();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("client_id", clientId);
+		map.put("user_id", userId);
+		map.put("code", code);
+		map.put("expires", expires);
+		return map;
 	}
 	
 }

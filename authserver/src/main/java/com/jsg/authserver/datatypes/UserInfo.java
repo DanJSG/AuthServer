@@ -1,9 +1,13 @@
 package com.jsg.authserver.datatypes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.repositories.UserInfoRepository;
 
-public class UserInfo {
+public class UserInfo implements SQLEntity {
 
 	@JsonProperty
 	private long id;
@@ -43,6 +47,15 @@ public class UserInfo {
 		Boolean isSaved = repo.save(this);
 		repo.closeConnection();
 		return isSaved;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("id", id);
+		map.put("displayname", displayName);
+		map.put("bio", bio);
+		return map;
 	}
 	
 }
