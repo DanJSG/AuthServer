@@ -2,13 +2,17 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
-import com.jsg.authserver.repositories.TokenPairRepository;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLEntity;
+import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
-public class TokenPair {
+public class TokenPair implements SQLEntity {
 	
 	private String clientId;
 	private String cookieToken;
@@ -60,18 +64,12 @@ public class TokenPair {
 		return new Timestamp(calendar.getTimeInMillis());
 	}
 	
-	public Boolean save(String connectionString, String username, String password) throws Exception {
-		TokenPairRepository repo = new TokenPairRepository(connectionString, username, password);
-		Boolean isSaved = repo.save(this);
-		repo.closeConnection();
-		return isSaved;
-	}
-	
-	public Boolean verifyRefreshTokens(TokenPairRepository tokenRepo, String secret) {
+	public Boolean verifyRefreshTokens(String secret) {
 		if(!JWTHandler.tokenIsValid(cookieToken, secret) || !JWTHandler.tokenIsValid(headerToken, secret)) {
 			return false;
 		}
-		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1);
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
+		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1, new TokenPairBuilder());
 		if(results == null || results.size() < 1) {
 			return false;
 		}
@@ -88,6 +86,16 @@ public class TokenPair {
 		this.id = tokenPair.getId();
 		this.isExpired = tokenPair.isExpired();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("cookieToken", cookieToken);
+		map.put("headerToken", headerToken);
+		map.put("expires", expires);
+		map.put("client_id", clientId);
+		return map;
 	}
 	
 }

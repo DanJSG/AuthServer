@@ -22,8 +22,8 @@ import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.User;
-import com.jsg.authserver.repositories.AppAuthRecordRepository;
-import com.jsg.authserver.repositories.UserRepository;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
 @RestController
 public final class AuthorizationController extends ApiController {
@@ -31,12 +31,8 @@ public final class AuthorizationController extends ApiController {
 	@Autowired
 	public AuthorizationController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${sql.username}") String sqlUsername,
-							@Value("${sql.password}") String sqlPassword,
-							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
-				sqlUsername, sqlPassword, sqlConnectionString);
+							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -49,26 +45,22 @@ public final class AuthorizationController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		LoginCredentials credentials = new LoginCredentials(body);
-		UserRepository userRepo = new UserRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		User user = new User(credentials.getEmail(), credentials.getPassword());
-		if(!user.verifyCredentials(userRepo)) {
-			userRepo.closeConnection();
+		if(!user.verifyCredentials()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		userRepo.closeConnection();
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
-		if(!app.verifyAppAuthRecord(appRepo)) {
-			appRepo.closeConnection();
+		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		appRepo.closeConnection();
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		if(!challenge.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
+		if(!challengeRepo.save(challenge)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		if(!authCode.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
+		if(!authRepo.save(authCode)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());

@@ -2,12 +2,16 @@ package com.jsg.authserver.datatypes;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
-import com.jsg.authserver.repositories.AuthCodeRepository;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLEntity;
+import com.jsg.authserver.libs.sql.SQLRepository;
 
-public class AuthCode {
+public class AuthCode implements SQLEntity {
 	
 	private long userId;
 	private String clientId;
@@ -51,15 +55,9 @@ public class AuthCode {
 		return new Timestamp(calendar.getTimeInMillis());
 	}
 	
-	public Boolean save(String connectionString, String username, String password) throws Exception {
-		AuthCodeRepository authRepo = new AuthCodeRepository(connectionString, username, password);
-		Boolean isSaved = authRepo.save(this);
-		authRepo.closeConnection();
-		return isSaved;
-	}
-	
-	public Boolean verifyAuthCode(AuthCodeRepository authRepo) throws Exception {
-		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1);
+	public Boolean verifyAuthCode() throws Exception {
+		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
+		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1, new AuthCodeBuilder());
 		if(authCodes == null || authCodes.size() < 1) {
 			return false;
 		}
@@ -71,6 +69,16 @@ public class AuthCode {
 		userId = authCode.getUserId();
 		expires = authCode.getExpiryDateTime();
 		return true;
+	}
+
+	@Override
+	public Map<String, Object> toSqlMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("client_id", clientId);
+		map.put("user_id", userId);
+		map.put("code", code);
+		map.put("expires", expires);
+		return map;
 	}
 	
 }

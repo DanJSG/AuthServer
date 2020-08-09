@@ -18,15 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.datatypes.AppAuthRecord;
+import com.jsg.authserver.datatypes.AppAuthRecordBuilder;
 import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.CodeChallenge;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.UserInfo;
-import com.jsg.authserver.repositories.AppAuthRecordRepository;
-import com.jsg.authserver.repositories.AuthCodeRepository;
-import com.jsg.authserver.repositories.CodeChallengeRepository;
-import com.jsg.authserver.repositories.TokenPairRepository;
-import com.jsg.authserver.repositories.UserInfoRepository;
+import com.jsg.authserver.datatypes.UserInfoBuilder;
+import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
@@ -35,12 +34,8 @@ public final class TokenController extends ApiController {
 	@Autowired
 	public TokenController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
 							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret,
-							@Value("${sql.username}") String sqlUsername,
-							@Value("${sql.password}") String sqlPassword,
-							@Value("${sql.connectionstring}") String sqlConnectionString) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret,
-				sqlUsername, sqlPassword, sqlConnectionString);
+							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	
 	@PostMapping(value = "/token")
@@ -65,8 +60,8 @@ public final class TokenController extends ApiController {
 	
 	private ResponseEntity<String> getAccessTokenWithClientCredentials(String client_id, String client_secret,
 			HttpServletResponse response) throws Exception {
-		AppAuthRecordRepository repo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
-		List<AppAuthRecord> appList = repo.findWhereEqual("client_id", client_id);
+		SQLRepository<AppAuthRecord> repo = new MySQLRepository<>("auth.apps");
+		List<AppAuthRecord> appList = repo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -82,16 +77,12 @@ public final class TokenController extends ApiController {
 		if(refresh_token == null || refreshCookie == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		TokenPairRepository tokenRepo = new TokenPairRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		TokenPair tokenPair = new TokenPair(client_id, refreshCookie, refresh_token);
-		if(!tokenPair.verifyRefreshTokens(tokenRepo, REFRESH_TOKEN_SECRET)) {
-			tokenRepo.closeConnection();
+		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		tokenRepo.closeConnection();
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id);
-		appRepo.closeConnection();
+		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
+		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -103,8 +94,8 @@ public final class TokenController extends ApiController {
 		if(id < 0 || secret == null || response == null) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		UserInfoRepository infoRepo = new UserInfoRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
-		List<UserInfo> info = infoRepo.findWhereEqual("id", id);
+		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>("users.info");
+		List<UserInfo> info = infoRepo.findWhereEqual("id", id, new UserInfoBuilder());
 		if(info == null || info.size() == 0) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -122,31 +113,23 @@ public final class TokenController extends ApiController {
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AppAuthRecordRepository appRepo = new AppAuthRecordRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
-		if(!app.verifyAppAuthRecord(appRepo)) {
-			appRepo.closeConnection();
+		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		appRepo.closeConnection();
-		AuthCodeRepository authRepo = new AuthCodeRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		AuthCode authCode = new AuthCode(client_id, code);
-		if(!authCode.verifyAuthCode(authRepo)) {
-			authRepo.closeConnection();
+		if(!authCode.verifyAuthCode()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		authRepo.closeConnection();
-		CodeChallengeRepository challengeRepo = new CodeChallengeRepository(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD);
 		CodeChallenge challenge = new CodeChallenge(client_id, state);
-		if(!challenge.verifyCodeChallenge(challengeRepo, code_verifier)) {
-			challengeRepo.closeConnection();
+		if(!challenge.verifyCodeChallenge(code_verifier)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		challengeRepo.closeConnection();
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
-		if(!tokenPair.save(SQL_CONNECTION_STRING, SQL_USERNAME, SQL_PASSWORD)) {
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
+		if(!tokenRepo.save(tokenPair)) {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}

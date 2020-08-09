@@ -22,28 +22,18 @@ public abstract class ApiController {
 	protected final int ACCESS_TOKEN_EXPIRY_TIME;
 	protected final int REFRESH_TOKEN_EXPIRY_TIME;
 	protected final String REFRESH_TOKEN_SECRET;
-	protected final String SQL_USERNAME;
-	protected final String SQL_PASSWORD;
-	protected final String SQL_CONNECTION_STRING;
 	
 	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
-							String refreshTokenSecret, String sqlUsername, String sqlPassword,
-							String sqlConnectionString) {
+							String refreshTokenSecret) {
 		this.ACCESS_TOKEN_EXPIRY_TIME = accessTokenExpiryTime;
 		this.REFRESH_TOKEN_EXPIRY_TIME = refreshTokenExpiryTime;
 		this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
-		this.SQL_CONNECTION_STRING = sqlConnectionString;
-		this.SQL_USERNAME = sqlUsername;
-		this.SQL_PASSWORD = sqlPassword;
 	}
 	
-	protected ApiController(String sqlUsername, String sqlPassword, String sqlConnectionString) {
+	protected ApiController() {
 		this.ACCESS_TOKEN_EXPIRY_TIME = -1;
 		this.REFRESH_TOKEN_EXPIRY_TIME = -1;
 		this.REFRESH_TOKEN_SECRET = null;
-		this.SQL_CONNECTION_STRING = sqlConnectionString;
-		this.SQL_USERNAME = sqlUsername;
-		this.SQL_PASSWORD = sqlPassword;
 	}
 	
 	protected Cookie createCookie(String name, String value, int expires) {
