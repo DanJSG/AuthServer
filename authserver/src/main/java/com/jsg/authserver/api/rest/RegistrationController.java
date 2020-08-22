@@ -1,5 +1,6 @@
 package com.jsg.authserver.api.rest;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.validator.routines.EmailValidator;
@@ -17,6 +18,7 @@ import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.datatypes.UserBuilder;
 
 @RestController
 public class RegistrationController extends ApiController {
@@ -69,6 +71,11 @@ public class RegistrationController extends ApiController {
 		if(!repo.save(user)) {
 			return null;
 		}
+		List<User> users = repo.findWhereEqual("email", email, 1, new UserBuilder());
+		if(users == null) {
+			return null;
+		}
+		user = users.get(0);
 		return user;
 	}
 	
