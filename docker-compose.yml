@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+    sql:
+        image: mysql:8.0
+        ports: 
+            - "3306:3306"
+        volumes: 
+            - /var/lib/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=password
+            - MYSQL_USER=localDev
+            - MYSQL_PASSWORD=l0c4l_d3v!
+        networks: 
+            - primary
+    
+    authentity_api:
+        build: ./authserver/
+        ports:
+            - "8090:8090"
+        depends_on: 
+            - sql
+        networks: 
+            - primary
+    
+    authentity-ui:
+        build: ./account-screen/
+        ports:
+            - "3010:3010"
+        volumes:
+            - ./account-screen:/app
+            - /app/node_modules
+        stdin_open: true
+        tty: true
+        environment: 
+            - CHOKIDAR_USEPOLLING=true
+        depends_on: 
+            - authentity_api
+        networks: 
+            - primary
+
+networks: 
+    primary:
+        driver: bridge
+            
