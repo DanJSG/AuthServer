@@ -17,11 +17,13 @@ services:
     authentity_api:
         build: ./authserver/
         ports:
-            - "8090:8090"
+            - "8090:8080"
         depends_on: 
             - sql
         networks: 
             - primary
+        env_file: 
+            ./authentity.env
     
     authentity-ui:
         build: ./account-screen/
