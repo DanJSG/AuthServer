@@ -32,9 +32,9 @@ import com.jsg.authserver.tokenhandlers.JWTHandler;
 public final class TokenController extends ApiController {
 
 	@Autowired
-	public TokenController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
-							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+	public TokenController(@Value("${ACCESS_TOKEN_EXPIRES}") int accessTokenExpiryTime,
+							@Value("${REFRESH_TOKEN_EXPIRES}") int refreshTokenExpiryTime,
+							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret) {
 		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	

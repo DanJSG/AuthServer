@@ -14,9 +14,9 @@ public final class SQLConnectionPool {
 	private static BasicDataSource dataSource = new BasicDataSource();
 	
 	@Autowired
-	private SQLConnectionPool(@Value("${sql.username}") String sqlUsername,
-							  @Value("${sql.password}") String sqlPassword,
-							  @Value("${sql.connectionstring}") String sqlConnectionString) {		
+	private SQLConnectionPool(@Value("${SQL_USERNAME}") String sqlUsername,
+							  @Value("${SQL_PASSWORD}") String sqlPassword,
+							  @Value("${SQL_CONNECTION_STRING}") String sqlConnectionString) {		
 		dataSource.setUrl(sqlConnectionString);
 		dataSource.setUsername(sqlUsername);
 		dataSource.setPassword(sqlPassword);

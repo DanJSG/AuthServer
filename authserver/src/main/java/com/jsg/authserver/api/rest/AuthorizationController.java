@@ -29,9 +29,9 @@ import com.jsg.authserver.libs.sql.SQLRepository;
 public final class AuthorizationController extends ApiController {
 
 	@Autowired
-	public AuthorizationController(@Value("${token.expiry.access}") int accessTokenExpiryTime,
-							@Value("${token.expiry.refresh}") int refreshTokenExpiryTime,
-							@Value("${token.secret.refresh}") String refreshTokenSecret) {
+	public AuthorizationController(@Value("${ACCESS_TOKEN_EXPIRES}") int accessTokenExpiryTime,
+							@Value("${REFRESH_TOKEN_EXPIRES}") int refreshTokenExpiryTime,
+							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret) {
 		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
 	}
 	

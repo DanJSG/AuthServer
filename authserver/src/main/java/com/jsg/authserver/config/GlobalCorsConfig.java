@@ -12,7 +12,7 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
 	private static String[] origins;
 	
 	@Autowired
-	public GlobalCorsConfig(@Value("${cors.origins}") String[] origins) {
+	public GlobalCorsConfig(@Value("${CORS_ORIGINS}") String[] origins) {
 		GlobalCorsConfig.origins = origins;
 	}
 	
