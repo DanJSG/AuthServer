@@ -6,5 +6,5 @@ COPY yarn.lock ./
 RUN npm install
 RUN npm install react-scripts@3.4.1 -g
 COPY . ./
-EXPOSE 3010
+EXPOSE 3000
 ENTRYPOINT [ "npm", "start" ]
