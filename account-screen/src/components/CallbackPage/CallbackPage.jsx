@@ -1,7 +1,7 @@
-import {useState, useEffect} from 'react';
-import {useLocation} from 'react-router-dom';
-import {requestTokens} from './services/callbackservice';
-import {getQueryStringAsJson} from '../../services/querystringmanipulator';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { requestTokens } from './services/callbackservice';
+import { getQueryStringAsJson } from '../../services/querystringmanipulator';
 
 function CallbackPage() {
 

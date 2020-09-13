@@ -1,11 +1,11 @@
-import {SHA256} from 'crypto-js';
+import { SHA256 } from 'crypto-js';
 
 const generateSecureString = (length) => {
     const randArray = new Uint8Array(length);
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let secureString = "";
     window.crypto.getRandomValues(randArray);
-    for(const i in randArray) {
+    for (const i in randArray) {
         secureString += chars[randArray[i] % chars.length]
     }
     return secureString;

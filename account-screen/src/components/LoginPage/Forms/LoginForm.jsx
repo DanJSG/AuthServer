@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 function LoginForm(props) {
     return (
@@ -19,9 +19,9 @@ function LoginForm(props) {
                             <button id="signInButton" className="btn btn-primary">Sign In</button>
                         </div>
                         <div className="form-group">
-                        <label className="form-text">
-                            Not got an account yet? <Link className="link text-decoration-none" to="/oauth2/register">Sign up here.</Link>
-                        </label>
+                            <label className="form-text">
+                                Not got an account yet? <Link className="link text-decoration-none" to="/oauth2/register">Sign up here.</Link>
+                            </label>
                         </div>
                     </form>
                 </div>

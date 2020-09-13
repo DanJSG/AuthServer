@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 function SignUpForm(props) {
 
@@ -26,9 +26,9 @@ function SignUpForm(props) {
                             <button id="signInButton" className="btn btn-primary">Sign Up</button>
                         </div>
                         <div className="form-group">
-                        <label className="form-text">
-                            Already have an account? <Link className="link text-decoration-none" to="/oauth2/authorize">Sign in here.</Link>
-                        </label>
+                            <label className="form-text">
+                                Already have an account? <Link className="link text-decoration-none" to="/oauth2/authorize">Sign in here.</Link>
+                            </label>
                         </div>
                     </form>
                 </div>
