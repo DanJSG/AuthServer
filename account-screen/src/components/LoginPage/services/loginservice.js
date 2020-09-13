@@ -30,7 +30,7 @@ export const sendLoginRequest = async (email, password, params) => {
     if (!checkParams(params)) {
         return {
             code: null,
-            error: "Something has gone wrong when this page was loaded. Please navigate back to the application you were trying to access to and click \"Log In\" again."
+            error: "Something has gone wrong when this page was loaded. Please navigate back to the application you were trying to access to and click \"Log In\" or \"Sign Up\" again."
         }
     }
     const path = buildQueryStringFromObject("/api/v1/authorize", params);

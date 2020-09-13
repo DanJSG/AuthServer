@@ -29,9 +29,9 @@ function SignUpPage() {
             setFormError(error);
             return;
         }
-        const response = await sendLoginRequest(email, password, params, params.code_challenge, params.state);
+        const response = await sendLoginRequest(email, password, params);
         if (response.error !== null) {
-            setFormError(response.error);
+            setFormError("Your account has been created succesfully, but we have had a problem whilst logging you in. " + response.error);
             return;
         }
         setAuthCode(response.code);
