@@ -16,3 +16,14 @@ export const getQueryStringAsJson = (location) => {
     })
     return newParams;
 }
+
+export const buildQueryStringFromObject = (basePath, params) => {
+    const paramNames = Object.keys(params);
+    let path = basePath;
+    for (let i = 0; i < paramNames.length; i++) {
+        const conjunction = i < 1 ? "?" : "&";
+        path += conjunction + paramNames[i] + "=" + params[paramNames[i]];
+    }
+    path = path.replace(/[ ]/, "+");
+    return path;
+}

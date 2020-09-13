@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom'
 import { checkForm, sendRegistrationRequest } from './services/signupservice';
 import { sendLoginRequest } from '../LoginPage/services/loginservice';
-import { generateState, generateCodeChallenge } from '../../services/challengeservice';
 import SignUpForm from './Forms/SignUpForm';
+import { getQueryStringAsJson } from '../../services/querystringmanipulator';
 
 function SignUpPage() {
 
+    const location = useLocation();
     const [formError, setFormError] = useState(null);
     const [authCode, setAuthCode] = useState(null);
-    const [state] = useState(generateState());
-    const [codeChallenge] = useState(generateCodeChallenge());
-    const [params] = useState({
-        client_id: 'ThpDT2t2EDlO',
-        redirect_uri: 'http://local.courier.net:3000/oauth2/auth_callback',
-        response_type: 'code'
-    });
+    const [params] = useState(getQueryStringAsJson(location));
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -33,7 +29,7 @@ function SignUpPage() {
             setFormError(error);
             return;
         }
-        const response = await sendLoginRequest(email, password, params, codeChallenge, state);
+        const response = await sendLoginRequest(email, password, params, params.code_challenge, params.state);
         if (response.error !== null) {
             setFormError(response.error);
             return;
@@ -43,16 +39,14 @@ function SignUpPage() {
 
     const redirectToCallback = () => {
         window.location.href = `${params.redirect_uri}?code=${authCode}` +
-            `&state=${state}` +
             `&client_id=${params.client_id}` +
-            `&redirect_uri=${params.redirect_uri}` +
-            `&code_verifier=${codeChallenge.code_verifier}`;
+            `&redirect_uri=${params.redirect_uri}`;
     }
 
     return (
         <div className="container-fluid inherit-height">
             {authCode === null ?
-                <SignUpForm handleRegister={handleRegister} formError={formError} />
+                <SignUpForm handleRegister={handleRegister} formError={formError} urlParams={params} />
                 :
                 redirectToCallback()
             }

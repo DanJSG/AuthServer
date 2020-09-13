@@ -41,7 +41,7 @@ function LoginPage() {
     return (
         <div className="container-fluid inherit-height">
             {authCode === null ?
-                <LoginForm handleLogin={handleLogin} formError={formError} />
+                <LoginForm handleLogin={handleLogin} formError={formError} urlParams={params} />
                 :
                 redirectToCallback()
             }
