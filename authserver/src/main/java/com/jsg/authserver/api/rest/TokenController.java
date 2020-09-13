@@ -25,7 +25,9 @@ import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.datatypes.UserInfoBuilder;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
@@ -60,8 +62,8 @@ public final class TokenController extends ApiController {
 	
 	private ResponseEntity<String> getAccessTokenWithClientCredentials(String client_id, String client_secret,
 			HttpServletResponse response) throws Exception {
-		SQLRepository<AppAuthRecord> repo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = repo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
+		SQLRepository<AppAuthRecord> repo = new MySQLRepository<>(SQLTable.APPS);
+		List<AppAuthRecord> appList = repo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -81,8 +83,8 @@ public final class TokenController extends ApiController {
 		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
+		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -94,8 +96,8 @@ public final class TokenController extends ApiController {
 		if(id < 0 || secret == null || response == null) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>("users.info");
-		List<UserInfo> info = infoRepo.findWhereEqual("id", id, new UserInfoBuilder());
+		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>(SQLTable.INFO);
+		List<UserInfo> info = infoRepo.findWhereEqual(SQLColumn.ID, id, new UserInfoBuilder());
 		if(info == null || info.size() == 0) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -128,7 +130,7 @@ public final class TokenController extends ApiController {
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
-		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>(SQLTable.TOKENS);
 		if(!tokenRepo.save(tokenPair)) {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;

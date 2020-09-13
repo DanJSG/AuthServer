@@ -8,15 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 	
 	private final String tableName;
 	
-	public MySQLRepository(String tableName) {
-		this.tableName = tableName;
+	public MySQLRepository(SQLTable tableName) {
+		this.tableName = tableName.name();
 	}
 	
 	@Override
@@ -65,32 +63,31 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 	}
 	
 	@Override
-	public <V> List<T> findWhereEqual(String searchColumn, V value, int limit, SQLEntityBuilder<T> builder) {
+	public <V> List<T> findWhereEqual(SQLColumn searchColumn, V value, int limit, SQLEntityBuilder<T> builder) {
+		return findWhereEqual(Arrays.asList(searchColumn), Arrays.asList(value), limit, builder);
+	}
+	
+	@Override
+	public <V> List<T> findWhereEqual(List<SQLColumn> searchColumns, List<V> values, int limit, SQLEntityBuilder<T> builder) {
 		Connection connection = getConnection();
 		if(connection == null) {
 			return null;
 		}
-		if(!checkColumnName(searchColumn)) {
-			System.out.println("Column name contains dangerous characters.");
+		if(searchColumns.size() != values.size()) {
 			return null;
 		}
-		String query = "SELECT * FROM `" + tableName + "` WHERE " + searchColumn + "=?;";
+		String baseQuery = "SELECT * FROM `" + tableName + "` WHERE ";
+		String queryCondition = "";
+		for(int i=0; i < searchColumns.size(); i++) {
+			queryCondition += searchColumns.get(i).name() + "=?";
+			if(i < searchColumns.size() - 1) {
+				queryCondition += " AND ";
+			}
+		}
+		queryCondition += ";";
+		String query = baseQuery + queryCondition;
 		try {
-			PreparedStatement statement = connection.prepareStatement(query);
-			statement.setFetchSize(limit);
-			statement.setObject(1, value);
-			ResultSet results = statement.executeQuery();
-			connection.commit();
-			ArrayList<T> objectList = new ArrayList<>();
-			while(results.next()) {
-				objectList.add(builder.fromResultSet(results));
-			}
-			if(objectList.size() == 0) {
-				connection.close();
-				return null;
-			}
-			connection.close();
-			return objectList;
+			return runCustomSelectQuery(connection, query, values, limit, builder);
 		} catch(Exception e) {
 			e.printStackTrace();
 			return null;
@@ -98,32 +95,14 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 	}
 	
 	@Override
-	public <V> List<T> findWhereLike(String searchColumn, V value, int limit, SQLEntityBuilder<T> builder) {
+	public <V> List<T> findWhereLike(SQLColumn searchColumn, V value, int limit, SQLEntityBuilder<T> builder) {
 		Connection connection = getConnection();
 		if(connection == null) {
 			return null;
 		}
-		if(!checkColumnName(searchColumn)) {
-			System.out.println("Column name contains dangerous characters.");
-			return null;
-		}
-		String query = "SELECT * FROM `" + tableName + "` WHERE " + searchColumn + " LIKE ?;";
+		String query = "SELECT * FROM `" + tableName + "` WHERE " + searchColumn.name() + " LIKE ?;";
 		try {
-			PreparedStatement statement = connection.prepareStatement(query);
-			statement.setFetchSize(limit);
-			statement.setObject(1, value);
-			ResultSet results = statement.executeQuery();
-			connection.commit();
-			ArrayList<T> objectList = new ArrayList<>();
-			while(results.next()) {
-				objectList.add(builder.fromResultSet(results));
-			}
-			if(objectList.size() == 0) {
-				connection.close();
-				return null;
-			}
-			connection.close();
-			return objectList;
+			return runCustomSelectQuery(connection, query, Arrays.asList(value), limit, builder);
 		} catch(Exception e) {
 			e.printStackTrace();
 			return null;
@@ -131,25 +110,27 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 	}
 	
 	@Override
-	public <V> List<T> findWhereLike(String searchColumn, V value, SQLEntityBuilder<T> builder) {
+	public <V> List<T> findWhereLike(SQLColumn searchColumn, V value, SQLEntityBuilder<T> builder) {
 		return findWhereLike(searchColumn, value, 0, builder);
 	}
 	
 	@Override
-	public <V> List<T> findWhereEqual(String searchColumn, V value, SQLEntityBuilder<T> builder) {
+	public <V> List<T> findWhereEqual(SQLColumn searchColumn, V value, SQLEntityBuilder<T> builder) {
 		return findWhereEqual(searchColumn, value, 0, builder);
 	}
 	
-	public <V, U> Boolean updateWhereEquals(String clauseColumn, V clauseValue, String updateColumn, U updateValue) {
+	@Override
+	public <V> List<T> findWhereEqual(List<SQLColumn> searchColumns, List<V> values, SQLEntityBuilder<T> builder) {
+		return findWhereEqual(searchColumns, values, 0, builder);
+	}
+	
+	@Override
+	public <V, U> Boolean updateWhereEquals(SQLColumn clauseColumn, V clauseValue, SQLColumn updateColumn, U updateValue) {
 		Connection connection = getConnection();
 		if(connection == null) {
 			return false;
 		}
-		if(!checkColumnName(clauseColumn) || !checkColumnName(updateColumn)) {
-			System.out.println("Column name contains dangerous characters.");
-			return false;
-		}
-		String query = "UPDATE `" + tableName + "` SET " + updateColumn + "= ? WHERE " + clauseColumn + " = ?;";
+		String query = "UPDATE `" + tableName + "` SET " + updateColumn.name() + "= ? WHERE " + clauseColumn.name() + " = ?;";
 		try {
 			PreparedStatement statement = connection.prepareStatement(query);
 			statement.setObject(1, updateValue);
@@ -187,15 +168,6 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 		return paramString;
 	}
 	
-	private Boolean checkColumnName(String columnName) {
-		// Blocks SQL column name from including dangerous input:
-		// spaces or --. This helps prevent SQL injection through a badly 
-		// implemented query.
-		Pattern blacklist = Pattern.compile("[ ][--]*");
-		Matcher matcher = blacklist.matcher(columnName);
-		return !matcher.find();
-	}
-	
 	private Connection getConnection() {
 		try {
 			Connection connection = SQLConnectionPool.getConnection();
@@ -205,6 +177,26 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	private <V> List<T> runCustomSelectQuery(Connection connection, String query, List<V> values, int limit, SQLEntityBuilder<T> builder) throws Exception {
+		PreparedStatement statement = connection.prepareStatement(query);
+		statement.setFetchSize(limit);
+		for(int i=0; i < values.size(); i++) {
+			statement.setObject(i + 1, values.get(i));
+		}
+		ResultSet results = statement.executeQuery();
+		connection.commit();
+		ArrayList<T> objectList = new ArrayList<>();
+		while(results.next()) {
+			objectList.add(builder.fromResultSet(results));
+		}
+		if(objectList.size() == 0) {
+			connection.close();
+			return null;
+		}
+		connection.close();
+		return objectList;
 	}
 
 	

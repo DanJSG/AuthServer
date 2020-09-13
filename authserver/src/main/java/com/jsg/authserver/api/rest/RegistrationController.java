@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 import com.jsg.authserver.datatypes.UserBuilder;
 
 @RestController
@@ -57,7 +59,7 @@ public class RegistrationController extends ApiController {
 	
 	private UserInfo createUserInfo(long id, String username) throws Exception {
 		UserInfo info = new UserInfo(id, username);
-		SQLRepository<UserInfo> repo = new MySQLRepository<>("users.info");
+		SQLRepository<UserInfo> repo = new MySQLRepository<>(SQLTable.INFO);
 		if(!repo.save(info)) {
 			return null;
 		}
@@ -67,11 +69,11 @@ public class RegistrationController extends ApiController {
 	private User createUser(String email, String password) throws Exception {
 		String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
 		User user = new User(email, hashedPassword);
-		SQLRepository<User> repo = new MySQLRepository<>("users.accounts");
+		SQLRepository<User> repo = new MySQLRepository<>(SQLTable.ACCOUNTS);
 		if(!repo.save(user)) {
 			return null;
 		}
-		List<User> users = repo.findWhereEqual("email", email, 1, new UserBuilder());
+		List<User> users = repo.findWhereEqual(SQLColumn.EMAIL, email, 1, new UserBuilder());
 		if(users == null) {
 			return null;
 		}

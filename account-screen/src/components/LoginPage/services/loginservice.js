@@ -19,11 +19,12 @@ const checkParams = (params) => {
         "state",
         "code_challenge_method"
     ]
-    for (const paramName in paramNames) {
+    let success = true;
+    paramNames.forEach(paramName => {
         if (!params.hasOwnProperty(paramName))
-            return false
-    }
-    return true;
+            success = false;
+    })
+    return success;
 }
 
 export const sendLoginRequest = async (email, password, params) => {

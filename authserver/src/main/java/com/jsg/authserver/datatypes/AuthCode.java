@@ -8,8 +8,10 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 public class AuthCode implements SQLEntity {
 	
@@ -56,8 +58,8 @@ public class AuthCode implements SQLEntity {
 	}
 	
 	public Boolean verifyAuthCode() throws Exception {
-		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
-		List<AuthCode> authCodes = authRepo.findWhereEqual("code", code, 1, new AuthCodeBuilder());
+		SQLRepository<AuthCode> authRepo = new MySQLRepository<>(SQLTable.CODES);
+		List<AuthCode> authCodes = authRepo.findWhereEqual(SQLColumn.CODE, code, 1, new AuthCodeBuilder());
 		if(authCodes == null || authCodes.size() < 1) {
 			return false;
 		}

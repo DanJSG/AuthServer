@@ -24,6 +24,7 @@ import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 @RestController
 public final class AuthorizationController extends ApiController {
@@ -54,12 +55,12 @@ public final class AuthorizationController extends ApiController {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
+		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>(SQLTable.CHALLENGES);
 		if(!challengeRepo.save(challenge)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
-		SQLRepository<AuthCode> authRepo = new MySQLRepository<>("auth.codes");
+		SQLRepository<AuthCode> authRepo = new MySQLRepository<>(SQLTable.CODES);
 		if(!authRepo.save(authCode)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}

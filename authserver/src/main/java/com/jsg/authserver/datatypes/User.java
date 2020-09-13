@@ -8,8 +8,10 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 public class User implements SQLEntity {
 	
@@ -51,8 +53,8 @@ public class User implements SQLEntity {
 	}
 	
 	public Boolean verifyCredentials() throws Exception {
-		SQLRepository<User> userRepo = new MySQLRepository<>("users.accounts");
-		List<User> results = userRepo.findWhereEqual("email", email, 1, new UserBuilder());
+		SQLRepository<User> userRepo = new MySQLRepository<>(SQLTable.ACCOUNTS);
+		List<User> results = userRepo.findWhereEqual(SQLColumn.EMAIL, email, 1, new UserBuilder());
 		if(results == null || results.size() < 1) {
 			return false;
 		}

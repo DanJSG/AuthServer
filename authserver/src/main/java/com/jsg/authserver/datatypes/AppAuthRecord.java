@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 public class AppAuthRecord implements SQLEntity {
 	
@@ -50,8 +52,8 @@ public class AppAuthRecord implements SQLEntity {
 	}
 	
 	public Boolean verifyAppAuthRecord() throws Exception {
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", clientId, 1, new AppAuthRecordBuilder());
+		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, clientId, 1, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return false;
 		}

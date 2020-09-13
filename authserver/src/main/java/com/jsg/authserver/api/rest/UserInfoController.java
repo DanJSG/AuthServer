@@ -17,7 +17,9 @@ import com.jsg.authserver.datatypes.AppAuthRecordBuilder;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.datatypes.UserInfoBuilder;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 import com.jsg.authserver.tokenhandlers.AuthHeaderHandler;
 import com.jsg.authserver.tokenhandlers.JWTHandler;
 
@@ -33,8 +35,8 @@ public class UserInfoController extends ApiController {
 	public ResponseEntity<String> getUserInfo(@RequestParam String client_id, @RequestParam long id,
 			@CookieValue(name = ACCESS_TOKEN_NAME, required = false) String jwt,
 			@RequestHeader String authorization) throws Exception {
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, 1, new AppAuthRecordBuilder());
+		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<AppAuthRecord> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, 1, new AppAuthRecordBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -43,8 +45,8 @@ public class UserInfoController extends ApiController {
 		if(!JWTHandler.tokenIsValid(jwt, app.getAccessTokenSecret()) || !JWTHandler.tokenIsValid(headerJwt, app.getAccessTokenSecret())) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>("users.info");
-		List<UserInfo> infoList = infoRepo.findWhereEqual("id", id, 1, new UserInfoBuilder());
+		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>(SQLTable.INFO);
+		List<UserInfo> infoList = infoRepo.findWhereEqual(SQLColumn.ID, id, 1, new UserInfoBuilder());
 		if(infoList == null || infoList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
