@@ -1,3 +1,5 @@
+import { buildQueryStringFromObject } from "../../../services/querystringmanipulator";
+
 export const checkLoginForm = (email, password) => {
     if (email === undefined || email === null || email === "") {
         return "Please enter an email address.";
@@ -8,14 +10,31 @@ export const checkLoginForm = (email, password) => {
     return null;
 }
 
+const checkParams = (params) => {
+    const paramNames = [
+        "code_challenge",
+        "response_type",
+        "client_id",
+        "redirect_uri",
+        "state",
+        "code_challenge_method"
+    ]
+    for (const paramName in paramNames) {
+        if (!params.hasOwnProperty(paramName))
+            return false
+    }
+    return true;
+}
+
 export const sendLoginRequest = async (email, password, params) => {
-    const url = `http://local.courier.net:8090/api/v1/authorize` +
-        `?code_challenge=${params.code_challenge}` +
-        `&response_type=${params.response_type}` +
-        `&client_id=${params.client_id}` +
-        `&redirect_uri=${params.redirect_uri}` +
-        `&state=${params.state}` +
-        `&code_challenge_method=${params.code_challenge_method}`;
+    if (!checkParams(params)) {
+        return {
+            code: null,
+            error: "Something has gone wrong when this page was loaded. Please navigate back to the application you were trying to access to and click \"Log In\" again."
+        }
+    }
+    const path = buildQueryStringFromObject("/api/v1/authorize", params);
+    const url = "http://local.courier.net:8090" + path;
     const credentials = JSON.stringify({
         credentials: btoa(JSON.stringify({
             email: email,
@@ -30,21 +49,13 @@ export const sendLoginRequest = async (email, password, params) => {
         }
     })
         .then((response) => {
-            if (response.status !== 200) {
-                return {
-                    code: null,
-                    error: "The email address and password combination you have entered is incorrect."
-                };
-            }
+            if (response.status !== 200)
+                throw Error("The email and password combination you have entered is incorrect.");
             return response.json();
         })
         .then((json) => {
-            if (!json) {
-                return {
-                    code: null,
-                    error: "An error occurred whilst the server was processing your request. Please refresh the page and retry."
-                };
-            }
+            if (!json)
+                throw Error("An error occurred whilst the server was processing your request. Please refresh the page and retry.");
             return {
                 code: json.code,
                 error: null
@@ -53,7 +64,7 @@ export const sendLoginRequest = async (email, password, params) => {
         .catch((error) => {
             return {
                 code: null,
-                error: "An error occurred when contacting the authorization server."
+                error: error.message
             };
         })
 }
