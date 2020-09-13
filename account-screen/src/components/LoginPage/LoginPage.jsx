@@ -24,7 +24,9 @@ function LoginPage() {
             return;
         }
         const response = await sendLoginRequest(email, password, params);
+        console.log(response);
         if (response.error !== null) {
+            console.log("Error detected...");
             setFormError(response.error);
             return;
         }
