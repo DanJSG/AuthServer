@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
-import {useLocation} from 'react-router-dom';
-import {checkLoginForm, sendLoginRequest} from './services/loginservice';
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { checkLoginForm, sendLoginRequest } from './services/loginservice';
 import LoginForm from './Forms/LoginForm';
-import {getQueryStringAsJson} from '../../services/querystringmanipulator';
+import { getQueryStringAsJson } from '../../services/querystringmanipulator';
 
 // local.courier.net:3000/oauth2/authorize?audience=courier&scope=name+email&response_type=code&client_id=ThpDT2t2EDlO&redirect_uri=http://local.courier.net:3000/oauth2/auth_callback
 
@@ -19,12 +19,12 @@ function LoginPage() {
         const email = e.target.elements.email.value.trim();
         const password = e.target.elements.password.value;
         const error = checkLoginForm(email, password);
-        if(error !== null) {
+        if (error !== null) {
             setFormError(error);
             return;
         }
         const response = await sendLoginRequest(email, password, params);
-        if(response.error !== null) {
+        if (response.error !== null) {
             setFormError(response.error);
             return;
         }
@@ -33,14 +33,14 @@ function LoginPage() {
 
     const redirectToCallback = () => {
         window.location.href = `${params.redirect_uri}` +
-                                `?code=${authCode}` + 
-                                `&client_id=${params.client_id}` + 
-                                `&redirect_uri=${params.redirect_uri}`;
+            `?code=${authCode}` +
+            `&client_id=${params.client_id}` +
+            `&redirect_uri=${params.redirect_uri}`;
     }
 
-    return(
+    return (
         <div className="container-fluid inherit-height">
-            {authCode === null ? 
+            {authCode === null ?
                 <LoginForm handleLogin={handleLogin} formError={formError} />
                 :
                 redirectToCallback()

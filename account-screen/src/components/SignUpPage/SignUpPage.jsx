@@ -1,7 +1,7 @@
-import React, {useState} from 'react';
-import {checkForm, sendRegistrationRequest} from './services/signupservice';
-import {sendLoginRequest} from '../LoginPage/services/loginservice';
-import {generateState, generateCodeChallenge} from '../../services/challengeservice';
+import React, { useState } from 'react';
+import { checkForm, sendRegistrationRequest } from './services/signupservice';
+import { sendLoginRequest } from '../LoginPage/services/loginservice';
+import { generateState, generateCodeChallenge } from '../../services/challengeservice';
 import SignUpForm from './Forms/SignUpForm';
 
 function SignUpPage() {
@@ -24,17 +24,17 @@ function SignUpPage() {
         const password = e.target.elements.password.value.trim();
         const repeatPassword = e.target.elements.repeatPassword.value.trim();
         let error = checkForm(email, username, password, repeatPassword);
-        if(error !== null) {
+        if (error !== null) {
             setFormError(error);
             return;
         }
         error = await sendRegistrationRequest(email, username, password);
-        if(error) {
+        if (error) {
             setFormError(error);
             return;
         }
         const response = await sendLoginRequest(email, password, params, codeChallenge, state);
-        if(response.error !== null) {
+        if (response.error !== null) {
             setFormError(response.error);
             return;
         }
@@ -42,16 +42,16 @@ function SignUpPage() {
     }
 
     const redirectToCallback = () => {
-        window.location.href = `${params.redirect_uri}?code=${authCode}` + 
-                                `&state=${state}` + 
-                                `&client_id=${params.client_id}` + 
-                                `&redirect_uri=${params.redirect_uri}` + 
-                                `&code_verifier=${codeChallenge.code_verifier}`;
+        window.location.href = `${params.redirect_uri}?code=${authCode}` +
+            `&state=${state}` +
+            `&client_id=${params.client_id}` +
+            `&redirect_uri=${params.redirect_uri}` +
+            `&code_verifier=${codeChallenge.code_verifier}`;
     }
 
-    return(
+    return (
         <div className="container-fluid inherit-height">
-            {authCode === null ? 
+            {authCode === null ?
                 <SignUpForm handleRegister={handleRegister} formError={formError} />
                 :
                 redirectToCallback()
