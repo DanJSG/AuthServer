@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 function SignUpForm(props) {
 
     return (
-        <div className="row align-items-center justify-content-center inherit-height">
-            <div className="col-3">
+        <div className="row align-items-center justify-content-center h-100" style={{ backgroundColor: "#f3f5f744" }}>
+            <div className="col-3 border shadow-sm rounded px-5 py-3 bg-white">
                 <div>
                     <h1 className="mb-4">Sign Up</h1>
                     <form onSubmit={props.handleRegister}>
