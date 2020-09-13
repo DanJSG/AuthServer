@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { buildQueryStringFromObject } from '../../../services/querystringmanipulator';
 
 function LoginForm(props) {
+
+    const [redirectPath] = useState(buildQueryStringFromObject("/oauth2/register", props.urlParams))
+
     return (
         <div className="row align-items-center justify-content-center h-100" style={{ backgroundColor: "#f3f5f744" }}>
             <div className="col-3 border shadow-sm rounded px-5 py-3 bg-white" >
@@ -20,7 +24,7 @@ function LoginForm(props) {
                         </div>
                         <div className="form-group">
                             <label className="form-text">
-                                Not got an account yet? <Link className="link text-decoration-none" to="/oauth2/register">Sign up here.</Link>
+                                Not got an account yet? <Link className="link text-decoration-none" to={redirectPath}>Sign up here.</Link>
                             </label>
                         </div>
                     </form>
