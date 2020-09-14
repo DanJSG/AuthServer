@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.jsg.authserver.auth.JWTHandler;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
-import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 public class TokenPair implements SQLEntity {
 	

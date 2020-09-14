@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.auth.JWTHandler;
 import com.jsg.authserver.datatypes.App;
 import com.jsg.authserver.datatypes.AppBuilder;
 import com.jsg.authserver.datatypes.AuthCode;
@@ -28,7 +29,6 @@ import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
-import com.jsg.authserver.tokenhandlers.JWTHandler;
 
 @RestController
 public final class TokenController extends ApiController {

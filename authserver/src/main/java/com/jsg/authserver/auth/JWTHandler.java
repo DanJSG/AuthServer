@@ -1,4 +1,4 @@
-package com.jsg.authserver.tokenhandlers;
+package com.jsg.authserver.auth;
 
 import java.util.Calendar;
 import java.util.Date;
