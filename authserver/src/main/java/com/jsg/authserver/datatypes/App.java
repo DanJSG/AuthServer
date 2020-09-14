@@ -10,7 +10,7 @@ import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
 
-public class AppAuthRecord implements SQLEntity {
+public class App implements SQLEntity {
 	
 	private String clientId;
 	private String redirectUri;
@@ -18,7 +18,7 @@ public class AppAuthRecord implements SQLEntity {
 	private String accessTokenSecret;
 	private long associatedAccountId;
 	
-	public AppAuthRecord(String clientId, String redirectUri, String clientSecret, 
+	public App(String clientId, String redirectUri, String clientSecret, 
 			String accessTokenSecret, long associatedAccountId) {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
@@ -27,7 +27,7 @@ public class AppAuthRecord implements SQLEntity {
 		this.associatedAccountId = associatedAccountId;
 	}
 	
-	public AppAuthRecord(String clientId, String redirectUri) {
+	public App(String clientId, String redirectUri) {
 		this(clientId, redirectUri, null, null, -1);
 	}
 	
@@ -52,12 +52,12 @@ public class AppAuthRecord implements SQLEntity {
 	}
 	
 	public Boolean verifyAppAuthRecord() throws Exception {
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>(SQLTable.APPS);
-		List<AppAuthRecord> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, clientId, 1, new AppAuthRecordBuilder());
+		SQLRepository<App> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, clientId, 1, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return false;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		if(!app.getRedirectUri().contentEquals(redirectUri)) {
 			return false;
 		}

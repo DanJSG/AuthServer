@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jsg.authserver.datatypes.AppAuthRecord;
-import com.jsg.authserver.datatypes.AppAuthRecordBuilder;
+import com.jsg.authserver.datatypes.App;
+import com.jsg.authserver.datatypes.AppBuilder;
 import com.jsg.authserver.datatypes.AuthCode;
-import com.jsg.authserver.datatypes.CodeChallenge;
+import com.jsg.authserver.datatypes.Challenge;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.datatypes.UserInfoBuilder;
@@ -62,12 +62,12 @@ public final class TokenController extends ApiController {
 	
 	private ResponseEntity<String> getAccessTokenWithClientCredentials(String client_id, String client_secret,
 			HttpServletResponse response) throws Exception {
-		SQLRepository<AppAuthRecord> repo = new MySQLRepository<>(SQLTable.APPS);
-		List<AppAuthRecord> appList = repo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppAuthRecordBuilder());
+		SQLRepository<App> repo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = repo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		if(!app.getClientSecret().contentEquals(client_secret)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
@@ -83,12 +83,12 @@ public final class TokenController extends ApiController {
 		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>(SQLTable.APPS);
-		List<AppAuthRecord> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppAuthRecordBuilder());
+		SQLRepository<App> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		return getAccessToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), response);
 	}
 	
@@ -115,7 +115,7 @@ public final class TokenController extends ApiController {
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
+		App app = new App(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
@@ -123,7 +123,7 @@ public final class TokenController extends ApiController {
 		if(!authCode.verifyAuthCode()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		CodeChallenge challenge = new CodeChallenge(client_id, state);
+		Challenge challenge = new Challenge(client_id, state);
 		if(!challenge.verifyCodeChallenge(code_verifier)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}

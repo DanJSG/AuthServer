@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jsg.authserver.datatypes.AppAuthRecord;
+import com.jsg.authserver.datatypes.App;
 import com.jsg.authserver.datatypes.AuthCode;
-import com.jsg.authserver.datatypes.CodeChallenge;
+import com.jsg.authserver.datatypes.Challenge;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.User;
 import com.jsg.authserver.libs.sql.MySQLRepository;
@@ -50,12 +50,12 @@ public final class AuthorizationController extends ApiController {
 		if(!user.verifyCredentials()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
+		App app = new App(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		CodeChallenge challenge = new CodeChallenge(client_id, code_challenge, state);
-		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>(SQLTable.CHALLENGES);
+		Challenge challenge = new Challenge(client_id, code_challenge, state);
+		SQLRepository<Challenge> challengeRepo = new MySQLRepository<>(SQLTable.CHALLENGES);
 		if(!challengeRepo.save(challenge)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
