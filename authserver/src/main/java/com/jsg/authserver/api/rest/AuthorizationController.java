@@ -1,6 +1,5 @@
 package com.jsg.authserver.api.rest;
 
-import java.security.SecureRandom;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -22,6 +21,7 @@ import com.jsg.authserver.datatypes.AuthCode;
 import com.jsg.authserver.datatypes.Challenge;
 import com.jsg.authserver.datatypes.LoginCredentials;
 import com.jsg.authserver.datatypes.User;
+import com.jsg.authserver.helpers.SecureRandomString;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
@@ -59,21 +59,12 @@ public final class AuthorizationController extends ApiController {
 		if(!challengeRepo.save(challenge)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AuthCode authCode = new AuthCode(client_id, user.getId(), generateSecureRandomString(24));
+		AuthCode authCode = new AuthCode(client_id, user.getId(), SecureRandomString.getAlphaNumeric(24));
 		SQLRepository<AuthCode> authRepo = new MySQLRepository<>(SQLTable.CODES);
 		if(!authRepo.save(authCode)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(new ObjectMapper().createObjectNode().put("code", authCode.getCode()).toString());
-	}
-	
-	private String generateSecureRandomString(int length) {
-		SecureRandom randomProvider = new SecureRandom();
-		StringBuilder stringBuilder = new StringBuilder();
-		for(int i=0; i < length; i++) {
-			stringBuilder.append(ALPHA_NUM_CHARS.charAt(randomProvider.nextInt(ALPHA_NUM_CHARS.length())));
-		}
-		return stringBuilder.toString();
 	}
 	
 }

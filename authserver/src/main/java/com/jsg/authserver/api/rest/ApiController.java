@@ -18,6 +18,7 @@ public abstract class ApiController {
 	protected static final String CODE_CHALLENGE_METHOD = "S256";
 	protected static final ResponseEntity<String> UNAUTHORIZED_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 	protected static final ResponseEntity<String> BAD_REQUEST_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+	protected static final ResponseEntity<String> INTERNAL_SERVER_ERROR_HTTP_RESPONSE = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
 	
 	protected final int ACCESS_TOKEN_EXPIRY_TIME;
 	protected final int REFRESH_TOKEN_EXPIRY_TIME;
