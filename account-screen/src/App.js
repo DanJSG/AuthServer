@@ -5,6 +5,7 @@ import CallbackPage from './components/CallbackPage/CallbackPage';
 import LogoutPage from './components/LogoutPage';
 import SignUpPage from './components/SignUpPage/SignUpPage'
 import './App.scss';
+import SettingsPage from './components/SettingsPage/SettingsPage';
 
 function App() {
   return (
@@ -21,6 +22,9 @@ function App() {
         </Route>
         <Route exact path="/oauth2/register">
           <SignUpPage></SignUpPage>
+        </Route>
+        <Route exact path="/settings">
+          <SettingsPage></SettingsPage>
         </Route>
       </Switch>
     </Router>
