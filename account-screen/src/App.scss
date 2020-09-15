@@ -8,4 +8,9 @@
     background-color: hsl(0, 0%, 96%);
 }
 
-@import '~bootstrap/scss/bootstrap.scss'
+.selectable:hover {
+    background-color: hsl(0, 0%, 96%);
+}
+
+@import '~bootstrap/scss/bootstrap.scss';
+@import '~font-awesome/scss/font-awesome.scss';
