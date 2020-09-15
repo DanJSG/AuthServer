@@ -1,6 +1,11 @@
 import React from 'react';
 
 function DeveloperTab(props) {
+
+    const registerApp = (e) => {
+        e.preventDefault();
+    }
+
     return (
         <div className="ml-3 w-100">
             <h1>Developer Settings</h1>
@@ -9,7 +14,7 @@ function DeveloperTab(props) {
             <div>
                 <h3 className="mb-3">Register Application</h3>
                 <p><i>Register an application to use Authentity as an OAuth2 authorization provider.</i></p>
-                <form>
+                <form onSubmit={registerApp}>
                     <div className="form-group">
                         <input type="text" placeholder="Application Name" className="form-control input-hover w-25" />
                     </div>
@@ -17,7 +22,7 @@ function DeveloperTab(props) {
                         <input type="text" placeholder="Redirect URI" className="form-control input-hover w-25" />
                     </div>
                     <div className="form-group">
-                        <button className="btn btn-primary">Register</button>
+                        <button type="submit" className="btn btn-primary">Register</button>
                     </div>
                 </form>
             </div>
