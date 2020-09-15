@@ -7,7 +7,7 @@ function Sidebar(props) {
             <h1>{props.title}</h1>
             <hr />
             <ul className="list-group">
-                {props.tabs.map(tab => <Selector active={tab.active} tab={tab} className="list-group-item border-0 selectable rounded w-100" selectTab={props.selectTab} />)}
+                {props.tabs.map(tab => <Selector active={tab.active} tab={tab} key={tab.name} className="list-group-item border-0 selectable rounded w-100" selectTab={props.selectTab} />)}
             </ul>
         </React.Fragment>
     );

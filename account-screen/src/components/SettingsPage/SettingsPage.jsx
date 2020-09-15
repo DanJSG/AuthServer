@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import DeveloperTab from './Tabs/DeveloperTab';
 import GeneralTab from './Tabs/GeneralTab';
-import Selector from './Sidebar/Selector';
 import Sidebar from './Sidebar/Sidebar';
 
 function SettingsPage() {
