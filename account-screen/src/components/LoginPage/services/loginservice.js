@@ -1,3 +1,4 @@
+import { generateCodeChallenge, generateState } from "../../../services/challengeservice";
 import { buildQueryStringFromObject } from "../../../services/querystringmanipulator";
 
 export const checkLoginForm = (email, password) => {
@@ -29,9 +30,16 @@ const checkParams = (params) => {
 
 export const sendLoginRequest = async (email, password, params) => {
     if (!checkParams(params)) {
-        return {
-            code: null,
-            error: "Something has gone wrong when this page was loaded. Please navigate back to the application you were trying to access to and click \"Log In\" or \"Sign Up\" again."
+        const state = generateState();
+        const challenge = generateCodeChallenge();
+        sessionStorage.setItem("state", state);
+        sessionStorage.setItem("code_verifier", challenge.code_verifier);
+        params = {
+            code_challenge: challenge.code_challenge,
+            response_type: "code",
+            state: state,
+            redirect_uri: process.env.REACT_APP_REDIRECT_URI,
+            code_challenge_method: challenge.code_challenge_method
         }
     }
     const path = buildQueryStringFromObject("/api/v1/authorize", params);
@@ -59,13 +67,15 @@ export const sendLoginRequest = async (email, password, params) => {
                 throw Error("An error occurred whilst the server was processing your request. Please refresh the page and retry.");
             return {
                 code: json.code,
-                error: null
+                error: null,
+                params: params
             };
         })
         .catch((error) => {
             return {
                 code: null,
-                error: error.message
+                error: error.message,
+                params: null
             };
         })
 }
