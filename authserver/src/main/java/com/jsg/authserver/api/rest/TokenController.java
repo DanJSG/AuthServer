@@ -51,10 +51,8 @@ public final class TokenController extends ApiController {
 			@RequestParam(required=false) String client_id, @RequestParam String grant_type, 
 			@CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
 					throws Exception {
-		if(client_id == null || redirect_uri == null) {
-			client_id = CLIENT_ID;
-			redirect_uri = REDIRECT_URI;
-		}
+		client_id = client_id == null ? CLIENT_ID : client_id;
+		redirect_uri = redirect_uri == null ? REDIRECT_URI : redirect_uri;
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
