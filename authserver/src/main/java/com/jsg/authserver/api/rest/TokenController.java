@@ -36,8 +36,11 @@ public final class TokenController extends ApiController {
 	@Autowired
 	public TokenController(@Value("${ACCESS_TOKEN_EXPIRES}") int accessTokenExpiryTime,
 							@Value("${REFRESH_TOKEN_EXPIRES}") int refreshTokenExpiryTime,
-							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
+							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret,
+							@Value("${CLIENT_ID}") String clientId, 
+							@Value("${REDIRECT_URI}") String redirectUri, 
+							@Value("${ACCESS_TOKEN_SECRET}") String accessTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, clientId, redirectUri, accessTokenSecret);
 	}
 	
 	@PostMapping(value = "/token")
@@ -45,9 +48,13 @@ public final class TokenController extends ApiController {
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
 			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
 			@RequestParam(required=false) String refresh_token, @RequestParam(required=false) String client_secret,
-			@RequestParam String client_id, @RequestParam String grant_type, 
+			@RequestParam(required=false) String client_id, @RequestParam String grant_type, 
 			@CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
 					throws Exception {
+		if(client_id == null || redirect_uri == null) {
+			client_id = CLIENT_ID;
+			redirect_uri = REDIRECT_URI;
+		}
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);

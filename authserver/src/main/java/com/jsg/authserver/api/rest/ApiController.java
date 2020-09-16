@@ -23,18 +23,37 @@ public abstract class ApiController {
 	protected final int ACCESS_TOKEN_EXPIRY_TIME;
 	protected final int REFRESH_TOKEN_EXPIRY_TIME;
 	protected final String REFRESH_TOKEN_SECRET;
+	protected final String CLIENT_ID;
+	protected final String REDIRECT_URI;
+	protected final String ACCESS_TOKEN_SECRET;
 	
 	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
 							String refreshTokenSecret) {
 		this.ACCESS_TOKEN_EXPIRY_TIME = accessTokenExpiryTime;
 		this.REFRESH_TOKEN_EXPIRY_TIME = refreshTokenExpiryTime;
 		this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
+		this.CLIENT_ID = null;
+		this.REDIRECT_URI = null;
+		this.ACCESS_TOKEN_SECRET = null;
+	}
+	
+	protected ApiController(int accessTokenExpiryTime, int refreshTokenExpiryTime,
+			String refreshTokenSecret, String clientId, String redirectUri, String accessTokenSecret) {
+		this.ACCESS_TOKEN_EXPIRY_TIME = accessTokenExpiryTime;
+		this.REFRESH_TOKEN_EXPIRY_TIME = refreshTokenExpiryTime;
+		this.REFRESH_TOKEN_SECRET = refreshTokenSecret;
+		this.CLIENT_ID = clientId;
+		this.REDIRECT_URI = redirectUri;
+		this.ACCESS_TOKEN_SECRET = accessTokenSecret;
 	}
 	
 	protected ApiController() {
 		this.ACCESS_TOKEN_EXPIRY_TIME = -1;
 		this.REFRESH_TOKEN_EXPIRY_TIME = -1;
 		this.REFRESH_TOKEN_SECRET = null;
+		this.CLIENT_ID = null;
+		this.REDIRECT_URI = null;
+		this.ACCESS_TOKEN_SECRET = null;
 	}
 	
 	protected Cookie createCookie(String name, String value, int expires) {

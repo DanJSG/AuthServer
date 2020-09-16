@@ -28,20 +28,27 @@ import com.jsg.authserver.libs.sql.SQLTable;
 
 @RestController
 public final class AuthorizationController extends ApiController {
-
+	
 	@Autowired
 	public AuthorizationController(@Value("${ACCESS_TOKEN_EXPIRES}") int accessTokenExpiryTime,
 							@Value("${REFRESH_TOKEN_EXPIRES}") int refreshTokenExpiryTime,
-							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
+							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret,
+							@Value("${CLIENT_ID}") String clientId, 
+							@Value("${REDIRECT_URI}") String redirectUri, 
+							@Value("${ACCESS_TOKEN_SECRET}") String accessTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, clientId, redirectUri, accessTokenSecret);
 	}
 	
 	@PostMapping(value = "/authorize", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody ResponseEntity<String> authorize(@RequestBody Map<String, String> body,
 			@RequestParam String code_challenge, @RequestParam String state, 
-			@RequestParam String response_type, @RequestParam String redirect_uri,
-			@RequestParam String client_id, @RequestParam String code_challenge_method,
+			@RequestParam String response_type, @RequestParam(required = false) String redirect_uri,
+			@RequestParam(required = false) String client_id, @RequestParam String code_challenge_method,
 			HttpServletResponse response) throws Exception {
+		if(client_id == null || redirect_uri == null) {
+			client_id = CLIENT_ID;
+			redirect_uri = REDIRECT_URI;
+		}
 		if(!code_challenge_method.contentEquals(CODE_CHALLENGE_METHOD)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
