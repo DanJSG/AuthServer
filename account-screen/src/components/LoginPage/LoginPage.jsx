@@ -38,10 +38,6 @@ function LoginPage() {
         let url = `${params.redirect_uri}?code=${authCode}&redirect_uri=${params.redirect_uri}`;
         url += params.client_id === undefined ? "" : `&client_id=${params.client_id}`;
         window.location.href = url;
-        // window.location.href = `${params.redirect_uri}` +
-        //     `?code=${authCode}` +
-        //     `&client_id=${params.client_id}` +
-        //     `&redirect_uri=${params.redirect_uri}`;
     }
 
     return (
