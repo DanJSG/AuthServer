@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.helpers.JsonObject;
@@ -23,6 +24,7 @@ public class User implements SQLEntity, JsonObject {
 	@JsonProperty
 	private String email;
 	
+	@JsonIgnore
 	private String password;
 		
 	public User() {}
