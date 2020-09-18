@@ -7,13 +7,15 @@ import java.util.Map;
 import org.mindrot.jbcrypt.BCrypt;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.helpers.JsonObject;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
 
-public class User implements SQLEntity {
+public class User implements SQLEntity, JsonObject {
 	
 	@JsonProperty
 	private long id;
@@ -73,6 +75,17 @@ public class User implements SQLEntity {
 		map.put("email", email);
 		map.put("password", password);
 		return map;
+	}
+
+	@Override
+	public String writeValueAsString() {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(this);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }
