@@ -4,29 +4,57 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.helpers.JsonObject;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
-public class AppAuthRecord implements SQLEntity {
+public class App implements SQLEntity, JsonObject {
 	
+	@JsonIgnore
 	private String clientId;
-	private String redirectUri;
-	private String clientSecret;
-	private String accessTokenSecret;
-	private long associatedAccountId;
 	
-	public AppAuthRecord(String clientId, String redirectUri, String clientSecret, 
-			String accessTokenSecret, long associatedAccountId) {
+	@JsonIgnore
+	private String clientSecret;
+	
+	@JsonIgnore
+	private String accessTokenSecret;
+	
+	@JsonIgnore
+	private long associatedAccountId;
+
+	@JsonProperty
+	private String name;
+	
+	@JsonProperty
+	private String redirectUri;
+
+	@JsonCreator
+	private App() {}
+	
+	public App(String clientId, String redirectUri, String clientSecret, 
+			String accessTokenSecret, long associatedAccountId, String name) {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.clientSecret = clientSecret;
 		this.accessTokenSecret = accessTokenSecret;
 		this.associatedAccountId = associatedAccountId;
+		this.name = name;
 	}
 	
-	public AppAuthRecord(String clientId, String redirectUri) {
-		this(clientId, redirectUri, null, null, -1);
+	public App(String clientId, String redirectUri) {
+		this(clientId, redirectUri, null, null, -1, null);
+
+	}
+	
+	public App(String clientId, String redirectUri, String name) {
+		this(clientId, redirectUri, null, null, -1, name);
 	}
 	
 	public String getClientId() {
@@ -49,13 +77,17 @@ public class AppAuthRecord implements SQLEntity {
 		return this.associatedAccountId;
 	}
 	
+	public String getName() {
+		return this.name;
+	}
+	
 	public Boolean verifyAppAuthRecord() throws Exception {
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", clientId, 1, new AppAuthRecordBuilder());
+		SQLRepository<App> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, clientId, 1, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return false;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		if(!app.getRedirectUri().contentEquals(redirectUri)) {
 			return false;
 		}
@@ -71,7 +103,19 @@ public class AppAuthRecord implements SQLEntity {
 		map.put("client_secret", clientSecret);
 		map.put("access_token_secret", accessTokenSecret);
 		map.put("associated_account_id", associatedAccountId);
+		map.put("name", name);
 		return map;
+	}
+
+	@Override
+	public String writeValueAsString() {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(this);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }

@@ -17,16 +17,18 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jsg.authserver.datatypes.AppAuthRecord;
-import com.jsg.authserver.datatypes.AppAuthRecordBuilder;
+import com.jsg.authserver.auth.JWTHandler;
+import com.jsg.authserver.datatypes.App;
+import com.jsg.authserver.datatypes.AppBuilder;
 import com.jsg.authserver.datatypes.AuthCode;
-import com.jsg.authserver.datatypes.CodeChallenge;
+import com.jsg.authserver.datatypes.Challenge;
 import com.jsg.authserver.datatypes.TokenPair;
 import com.jsg.authserver.datatypes.UserInfo;
 import com.jsg.authserver.datatypes.UserInfoBuilder;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLRepository;
-import com.jsg.authserver.tokenhandlers.JWTHandler;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 @RestController
 public final class TokenController extends ApiController {
@@ -34,8 +36,11 @@ public final class TokenController extends ApiController {
 	@Autowired
 	public TokenController(@Value("${ACCESS_TOKEN_EXPIRES}") int accessTokenExpiryTime,
 							@Value("${REFRESH_TOKEN_EXPIRES}") int refreshTokenExpiryTime,
-							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret) {
-		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret);
+							@Value("${REFRESH_TOKEN_SECRET}") String refreshTokenSecret,
+							@Value("${CLIENT_ID}") String clientId, 
+							@Value("${REDIRECT_URI}") String redirectUri, 
+							@Value("${ACCESS_TOKEN_SECRET}") String accessTokenSecret) {
+		super(accessTokenExpiryTime, refreshTokenExpiryTime, refreshTokenSecret, clientId, redirectUri, accessTokenSecret);
 	}
 	
 	@PostMapping(value = "/token")
@@ -43,9 +48,11 @@ public final class TokenController extends ApiController {
 			@RequestParam(required=false) String code, @RequestParam(required=false) String state,
 			@RequestParam(required=false) String redirect_uri, @RequestParam(required=false) String code_verifier,
 			@RequestParam(required=false) String refresh_token, @RequestParam(required=false) String client_secret,
-			@RequestParam String client_id, @RequestParam String grant_type, 
+			@RequestParam(required=false) String client_id, @RequestParam String grant_type, 
 			@CookieValue(name = REFRESH_TOKEN_NAME, required = false) String refreshCookie) 
 					throws Exception {
+		client_id = client_id == null ? CLIENT_ID : client_id;
+		redirect_uri = redirect_uri == null ? REDIRECT_URI : redirect_uri;
 		switch(grant_type) {
 			case AUTH_CODE_GRANT_TYPE:
 				return getRefreshTokenWithAuthCode(code, state, client_id, redirect_uri, code_verifier, response);
@@ -60,12 +67,12 @@ public final class TokenController extends ApiController {
 	
 	private ResponseEntity<String> getAccessTokenWithClientCredentials(String client_id, String client_secret,
 			HttpServletResponse response) throws Exception {
-		SQLRepository<AppAuthRecord> repo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = repo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
+		SQLRepository<App> repo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = repo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		if(!app.getClientSecret().contentEquals(client_secret)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
@@ -81,12 +88,12 @@ public final class TokenController extends ApiController {
 		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		SQLRepository<AppAuthRecord> appRepo = new MySQLRepository<>("auth.apps");
-		List<AppAuthRecord> appList = appRepo.findWhereEqual("client_id", client_id, new AppAuthRecordBuilder());
+		SQLRepository<App> appRepo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> appList = appRepo.findWhereEqual(SQLColumn.CLIENT_ID, client_id, new AppBuilder());
 		if(appList == null || appList.size() < 1) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = appList.get(0);
+		App app = appList.get(0);
 		return getAccessToken(JWTHandler.getIdFromToken(refresh_token), app.getAccessTokenSecret(), response);
 	}
 	
@@ -94,8 +101,8 @@ public final class TokenController extends ApiController {
 		if(id < 0 || secret == null || response == null) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
-		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>("users.info");
-		List<UserInfo> info = infoRepo.findWhereEqual("id", id, new UserInfoBuilder());
+		SQLRepository<UserInfo> infoRepo = new MySQLRepository<>(SQLTable.INFO);
+		List<UserInfo> info = infoRepo.findWhereEqual(SQLColumn.ID, id, new UserInfoBuilder());
 		if(info == null || info.size() == 0) {
 			return BAD_REQUEST_HTTP_RESPONSE;
 		}
@@ -113,7 +120,7 @@ public final class TokenController extends ApiController {
 		if(code == null || state == null || client_id == null || redirect_uri == null || code_verifier == null) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		AppAuthRecord app = new AppAuthRecord(client_id, redirect_uri);
+		App app = new App(client_id, redirect_uri);
 		if(!app.verifyAppAuthRecord()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
@@ -121,14 +128,14 @@ public final class TokenController extends ApiController {
 		if(!authCode.verifyAuthCode()) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
-		CodeChallenge challenge = new CodeChallenge(client_id, state);
+		Challenge challenge = new Challenge(client_id, state);
 		if(!challenge.verifyCodeChallenge(code_verifier)) {
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		String cookieToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		String headerToken = JWTHandler.createToken(authCode.getUserId(), REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY_TIME);
 		TokenPair tokenPair = new TokenPair(client_id, cookieToken, headerToken);
-		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>(SQLTable.TOKENS);
 		if(!tokenRepo.save(tokenPair)) {
 			System.out.println("Problem saving tokens");
 			return UNAUTHORIZED_HTTP_RESPONSE;

@@ -12,28 +12,30 @@ import org.apache.tomcat.util.codec.binary.Base64;
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
-public class CodeChallenge implements SQLEntity {
+public class Challenge implements SQLEntity {
 	
 	private String clientId;
-	private String codeChallenge;
+	private String challenge;
 	private String state;
 	private Timestamp expires;
 	
-	public CodeChallenge(String clientId, String codeChallenge, String state) {
+	public Challenge(String clientId, String codeChallenge, String state) {
 		this(clientId, codeChallenge, state, createExpiryTimestamp());
 	}
 	
-	public CodeChallenge(String clientId, String codeChallenge, String state, Timestamp expires) {
+	public Challenge(String clientId, String codeChallenge, String state, Timestamp expires) {
 		this.clientId = clientId;
-		this.codeChallenge = codeChallenge;
+		this.challenge = codeChallenge;
 		this.state = state;
 		this.expires = expires;
 	}
 	
-	public CodeChallenge(String clientId, String state) {
+	public Challenge(String clientId, String state) {
 		this(clientId, null, state, null);
 	}
 	
@@ -42,7 +44,7 @@ public class CodeChallenge implements SQLEntity {
 	}
 	
 	public String getCodeChallenge() {
-		return this.codeChallenge;
+		return this.challenge;
 	}
 	
 	public String getState() {
@@ -60,12 +62,12 @@ public class CodeChallenge implements SQLEntity {
 	}
 	
 	public Boolean verifyCodeChallenge(String code_verifier) throws Exception {
-		SQLRepository<CodeChallenge> challengeRepo = new MySQLRepository<>("auth.challenge");
-		List<CodeChallenge> codeChallenges = challengeRepo.findWhereEqual("state", state, new CodeChallengeBuilder());
+		SQLRepository<Challenge> challengeRepo = new MySQLRepository<>(SQLTable.CHALLENGES);
+		List<Challenge> codeChallenges = challengeRepo.findWhereEqual(SQLColumn.STATE, state, new CodeChallengeBuilder());
 		if(codeChallenges == null || codeChallenges.size() < 1) {
 			return false;
 		}
-		CodeChallenge codeChallenge = codeChallenges.get(0);
+		Challenge codeChallenge = codeChallenges.get(0);
 		if(codeChallenge.getExpiryDateTime().before(new Timestamp(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeInMillis())) || 
 				!codeChallenge.getClientId().contentEquals(clientId)) {
 			return false;
@@ -83,7 +85,7 @@ public class CodeChallenge implements SQLEntity {
 	public Map<String, Object> toSqlMap() {
 		Map<String, Object> map = new HashMap<>();
 		map.put("client_id", clientId);
-		map.put("code_challenge", codeChallenge);
+		map.put("code_challenge", challenge);
 		map.put("state", state);
 		map.put("expires", expires);
 		return map;

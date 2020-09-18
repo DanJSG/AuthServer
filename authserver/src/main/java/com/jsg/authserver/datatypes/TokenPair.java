@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import com.jsg.authserver.auth.JWTHandler;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
-import com.jsg.authserver.tokenhandlers.JWTHandler;
+import com.jsg.authserver.libs.sql.SQLTable;
 
 public class TokenPair implements SQLEntity {
 	
@@ -68,8 +70,8 @@ public class TokenPair implements SQLEntity {
 		if(!JWTHandler.tokenIsValid(cookieToken, secret) || !JWTHandler.tokenIsValid(headerToken, secret)) {
 			return false;
 		}
-		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>("auth.tokens");
-		List<TokenPair> results = tokenRepo.findWhereEqual("cookieToken", cookieToken, 1, new TokenPairBuilder());
+		SQLRepository<TokenPair> tokenRepo = new MySQLRepository<>(SQLTable.TOKENS);
+		List<TokenPair> results = tokenRepo.findWhereEqual(SQLColumn.COOKIETOKEN, cookieToken, 1, new TokenPairBuilder());
 		if(results == null || results.size() < 1) {
 			return false;
 		}

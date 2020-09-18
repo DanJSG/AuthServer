@@ -1,10 +1,9 @@
-const requestRefreshToken = (params) => {
+const requestRefreshToken = (params, state, code_verifier) => {
     const url = `http://local.courier.net:8090/api/v1/token` +
-        `?client_id=${params.client_id}` +
-        `&state=${params.state}` +
+        `?state=${state}` +
         `&code=${params.code}` +
         `&redirect_uri=${params.redirect_uri}` +
-        `&code_verifier=${params.code_verifier}` +
+        `&code_verifier=${code_verifier}` +
         `&grant_type=authorization_code`;
     fetch(url, {
         method: "POST",
@@ -29,10 +28,8 @@ const requestRefreshToken = (params) => {
 
 const requestAccessToken = (client_id, refresh_token) => {
     console.log("Requesting access token with: " + refresh_token);
-    const url = `http://local.courier.net:8090/api/v1/token` +
-        `?client_id=${client_id}` +
-        `&refresh_token=${refresh_token}` +
-        `&grant_type=refresh_token`;
+    let url = `http://local.courier.net:8090/api/v1/token?refresh_token=${refresh_token}&grant_type=refresh_token`;
+    url += client_id === undefined ? "" : `&client_id=${client_id}`;
     fetch(url, {
         method: "POST",
         credentials: "include"
@@ -47,13 +44,13 @@ const requestAccessToken = (client_id, refresh_token) => {
         })
         .then((json) => {
             localStorage.setItem("acc.tok", json.token);
-            window.location.href = "http://local.courier.net:3000";
+            window.location.href = "http://local.courier.net:3010/settings";
         })
         .catch((error) => {
             console.log(error);
         })
 }
 
-export const requestTokens = (params) => {
-    requestRefreshToken(params);
+export const requestTokens = (params, state, code_verifier) => {
+    requestRefreshToken(params, state, code_verifier);
 }

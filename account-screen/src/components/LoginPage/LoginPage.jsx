@@ -11,7 +11,7 @@ function LoginPage() {
     const location = useLocation();
     const [authCode, setAuthCode] = useState(null);
     const [formError, setFormError] = useState(null);
-    const [params] = useState(getQueryStringAsJson(location));
+    const [params, setParams] = useState(getQueryStringAsJson(location));
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -30,14 +30,14 @@ function LoginPage() {
             setFormError(response.error);
             return;
         }
+        setParams(response.params);
         setAuthCode(response.code);
     }
 
     const redirectToCallback = () => {
-        window.location.href = `${params.redirect_uri}` +
-            `?code=${authCode}` +
-            `&client_id=${params.client_id}` +
-            `&redirect_uri=${params.redirect_uri}`;
+        let url = `${params.redirect_uri}?code=${authCode}&redirect_uri=${params.redirect_uri}`;
+        url += params.client_id === undefined ? "" : `&client_id=${params.client_id}`;
+        window.location.href = url;
     }
 
     return (

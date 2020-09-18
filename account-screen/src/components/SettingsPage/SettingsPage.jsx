@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DeveloperTab from './Tabs/DeveloperTab';
 import GeneralTab from './Tabs/GeneralTab';
 import Sidebar from './Sidebar/Sidebar';
+import { authorize } from './services/auth'
 
 function SettingsPage() {
 
+    const [authorized, setAuthorized] = useState(false);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [user, setUser] = useState(null);
     const [currentTab, setCurrentTab] = useState(<GeneralTab></GeneralTab>);
     const [tabs, setTabs] = useState([
         {
@@ -21,14 +25,28 @@ function SettingsPage() {
         },
     ])
 
+    useEffect(() => {
+        async function checkAuth() {
+            const user = await authorize();
+            if (user === null) {
+                setAuthChecked(true);
+                return;
+            }
+            setAuthorized(true);
+            setUser(user);
+            setAuthChecked(true);
+        }
+        if (!authChecked)
+            checkAuth();
+    })
+
     const selectTab = (tab) => {
         setTabs(prevTabs => {
             prevTabs.forEach(prevTab => {
-                if (prevTab === tab) {
+                if (prevTab === tab)
                     prevTab.active = true;
-                } else {
+                else
                     prevTab.active = false;
-                }
             });
             return prevTabs;
         })
@@ -37,14 +55,15 @@ function SettingsPage() {
 
     return (
         <div className="container-fluid h-100">
-            <div className="row h-100 p-3">
-                <div className="col-2 border-right">
-                    <Sidebar tabs={tabs} selectTab={selectTab} title="Settings"></Sidebar>
-                </div>
-                <div className="col-10 w-100">
-                    {currentTab}
-                </div>
-            </div>
+            {
+                authorized ?
+                    <div className="row h-100 p-3">
+                        <Sidebar tabs={tabs} selectTab={selectTab} title="Settings"></Sidebar>
+                        {currentTab}
+                    </div>
+                    :
+                    authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
+            }
         </div >
     );
 }

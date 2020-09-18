@@ -6,12 +6,17 @@ import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.helpers.JsonObject;
 import com.jsg.authserver.libs.sql.MySQLRepository;
+import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
+import com.jsg.authserver.libs.sql.SQLTable;
 
-public class User implements SQLEntity {
+public class User implements SQLEntity, JsonObject {
 	
 	@JsonProperty
 	private long id;
@@ -19,6 +24,7 @@ public class User implements SQLEntity {
 	@JsonProperty
 	private String email;
 	
+	@JsonIgnore
 	private String password;
 		
 	public User() {}
@@ -51,8 +57,8 @@ public class User implements SQLEntity {
 	}
 	
 	public Boolean verifyCredentials() throws Exception {
-		SQLRepository<User> userRepo = new MySQLRepository<>("users.accounts");
-		List<User> results = userRepo.findWhereEqual("email", email, 1, new UserBuilder());
+		SQLRepository<User> userRepo = new MySQLRepository<>(SQLTable.ACCOUNTS);
+		List<User> results = userRepo.findWhereEqual(SQLColumn.EMAIL, email, 1, new UserBuilder());
 		if(results == null || results.size() < 1) {
 			return false;
 		}
@@ -71,6 +77,17 @@ public class User implements SQLEntity {
 		map.put("email", email);
 		map.put("password", password);
 		return map;
+	}
+
+	@Override
+	public String writeValueAsString() {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(this);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }
