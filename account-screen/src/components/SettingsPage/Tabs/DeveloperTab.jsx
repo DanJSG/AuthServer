@@ -1,9 +1,13 @@
 import React from 'react';
+import { registerApp } from '../services/appregistration';
 
 function DeveloperTab(props) {
 
-    const registerApp = (e) => {
+    const registerAppSubmitted = (e) => {
         e.preventDefault();
+        const name = e.target.elements.appName.value;
+        const redirectUri = e.target.elements.appRedirectUri.value;
+        registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
     }
 
     return (
@@ -15,12 +19,12 @@ function DeveloperTab(props) {
                 <div>
                     <h3 className="mb-3">Register Application</h3>
                     <p><i>Register an application to use Authentity as an OAuth2 authorization provider.</i></p>
-                    <form onSubmit={registerApp}>
+                    <form onSubmit={registerAppSubmitted}>
                         <div className="form-group">
-                            <input type="text" placeholder="Application Name" className="form-control input-hover w-25" />
+                            <input name="appName" type="text" placeholder="Application Name" className="form-control input-hover w-25" />
                         </div>
                         <div className="form-group">
-                            <input type="text" placeholder="Redirect URI" className="form-control input-hover w-25" />
+                            <input name="appRedirectUri" type="text" placeholder="Redirect URI" className="form-control input-hover w-25" />
                         </div>
                         <div className="form-group">
                             <button type="submit" className="btn btn-primary">Register</button>

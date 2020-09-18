@@ -15,7 +15,10 @@ public class GlobalAuthConfig implements WebMvcConfigurer {
 	
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {	
-		registry.addInterceptor(authInterceptor).addPathPatterns("/api/v1/settings/auth*");
+		registry.addInterceptor(authInterceptor).addPathPatterns(
+				"/api/v1/settings/auth*",
+				"/api/v1/app/register*"
+		);
 	}
 
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DeveloperTab from './Tabs/DeveloperTab';
 import GeneralTab from './Tabs/GeneralTab';
 import Sidebar from './Sidebar/Sidebar';
-import { authorize } from './services/authservice'
+import { authorize } from './services/auth'
 
 function SettingsPage() {
 
