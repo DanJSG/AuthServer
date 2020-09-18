@@ -27,13 +27,13 @@ function SettingsPage() {
 
     useEffect(() => {
         async function checkAuth() {
-            const user = await authorize();
-            if (user === null) {
+            const fetchedUser = await authorize();
+            if (fetchedUser === null) {
                 setAuthChecked(true);
                 return;
             }
             setAuthorized(true);
-            setUser(user);
+            setUser(fetchedUser);
             setAuthChecked(true);
         }
         if (!authChecked)
