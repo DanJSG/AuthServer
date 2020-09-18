@@ -1,7 +1,6 @@
 package com.jsg.authserver.api.rest;
 
 import java.security.SecureRandom;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,22 +26,14 @@ public class AppController extends ApiController {
 	}
 	
 	@PostMapping(value = "/app/register", consumes = "application/json")
-	public ResponseEntity<String> create(@RequestHeader("authorization") AuthToken token, @RequestBody Map<String, String> redirectUri) {
-		
-		// TODO add authorization -> do not merge with master until auth added
-		
+	public ResponseEntity<String> create(@RequestHeader("authorization") AuthToken token, @RequestBody App appDetails) {
 		String clientId = SecureRandomString.getAlphaNumeric(12);
 		String clientSecret = SecureRandomString.getAlphaNumeric(new SecureRandom().nextInt(19) + 32);
 		String accessTokenSecret = SecureRandomString.getAlphaNumeric(128);
-		
-		App app = new App(clientId, redirectUri.get("redirect_uri"), clientSecret, accessTokenSecret, token.getId());
-		
+		App app = new App(clientId, appDetails.getRedirectUri(), clientSecret, accessTokenSecret, token.getId(), appDetails.getName());
 		SQLRepository<App> repo = new MySQLRepository<>(SQLTable.APPS);
-		
-		if(!repo.save(app)) {
+		if(!repo.save(app))
 			return INTERNAL_SERVER_ERROR_HTTP_RESPONSE;
-		}
-		
 		return ResponseEntity.status(HttpStatus.OK).body(null);
 	}
 	

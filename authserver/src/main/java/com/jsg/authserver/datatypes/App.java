@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
@@ -13,22 +15,36 @@ import com.jsg.authserver.libs.sql.SQLTable;
 public class App implements SQLEntity {
 	
 	private String clientId;
-	private String redirectUri;
 	private String clientSecret;
 	private String accessTokenSecret;
 	private long associatedAccountId;
+
+	@JsonProperty
+	private String name;
+	
+	@JsonProperty
+	private String redirectUri;
+
+	@JsonCreator
+	private App() {}
 	
 	public App(String clientId, String redirectUri, String clientSecret, 
-			String accessTokenSecret, long associatedAccountId) {
+			String accessTokenSecret, long associatedAccountId, String name) {
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.clientSecret = clientSecret;
 		this.accessTokenSecret = accessTokenSecret;
 		this.associatedAccountId = associatedAccountId;
+		this.name = name;
 	}
 	
 	public App(String clientId, String redirectUri) {
-		this(clientId, redirectUri, null, null, -1);
+		this(clientId, redirectUri, null, null, -1, null);
+
+	}
+	
+	public App(String clientId, String redirectUri, String name) {
+		this(clientId, redirectUri, null, null, -1, name);
 	}
 	
 	public String getClientId() {
@@ -49,6 +65,10 @@ public class App implements SQLEntity {
 	
 	public long getAssociatedAccountId() {
 		return this.associatedAccountId;
+	}
+	
+	public String getName() {
+		return this.name;
 	}
 	
 	public Boolean verifyAppAuthRecord() throws Exception {
@@ -73,6 +93,7 @@ public class App implements SQLEntity {
 		map.put("client_secret", clientSecret);
 		map.put("access_token_secret", accessTokenSecret);
 		map.put("associated_account_id", associatedAccountId);
+		map.put("name", name);
 		return map;
 	}
 	

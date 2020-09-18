@@ -7,7 +7,7 @@ export const registerApp = (name, redirectUri, token) => {
             "Authorization": "Bearer " + token,
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ redirect_uri: redirectUri, name: name })
+        body: JSON.stringify({ redirectUri: redirectUri, name: name })
     })
         .then(response => {
             console.log(response);

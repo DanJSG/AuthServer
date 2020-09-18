@@ -14,7 +14,8 @@ public class AppBuilder implements SQLEntityBuilder<App> {
 			String clientSecret = sqlResults.getString("client_secret");
 			String accessTokenSecret = sqlResults.getString("access_token_secret");
 			long accountId = sqlResults.getLong("associated_account_id");
-			return new App(clientId, redirectUri, clientSecret, accessTokenSecret, accountId);
+			String name = sqlResults.getString("name");
+			return new App(clientId, redirectUri, clientSecret, accessTokenSecret, accountId, name);
 		} catch(Exception e) {
 			e.printStackTrace();
 			return null;
