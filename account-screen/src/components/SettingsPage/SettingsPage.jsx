@@ -58,12 +58,8 @@ function SettingsPage() {
             {
                 authorized ?
                     <div className="row h-100 p-3">
-                        <div className="col-2 border-right">
-                            <Sidebar tabs={tabs} selectTab={selectTab} title="Settings"></Sidebar>
-                        </div>
-                        <div className="col-10 w-100">
-                            {currentTab}
-                        </div>
+                        <Sidebar tabs={tabs} selectTab={selectTab} title="Settings"></Sidebar>
+                        {currentTab}
                     </div>
                     :
                     authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
