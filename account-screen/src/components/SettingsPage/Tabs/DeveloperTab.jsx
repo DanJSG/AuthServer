@@ -1,14 +1,26 @@
-import React from 'react';
-import { registerApp } from '../services/appregistration';
+import React, { useEffect, useState } from 'react';
+import { getApps, registerApp } from '../services/appregistration';
 
 function DeveloperTab(props) {
+
+    const [applications, setApplications] = useState(null);
 
     const registerAppSubmitted = (e) => {
         e.preventDefault();
         const name = e.target.elements.appName.value;
         const redirectUri = e.target.elements.appRedirectUri.value;
         registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
+        e.target.elements.appName.value = null;
+        e.target.elements.appRedirectUri.value = null;
     }
+
+    useEffect(() => {
+        async function fetchApps() {
+            const apps = await getApps(localStorage.getItem("acc.tok"));
+            setApplications(apps);
+        }
+        fetchApps();
+    })
 
     return (
         <div className="col-10 w-100">
@@ -35,11 +47,19 @@ function DeveloperTab(props) {
                 <div>
                     <h3 className="mb-3">Existing Applications</h3>
                     {
-                        props.applications === undefined || props.applications === null ?
+                        applications === undefined || applications === null ?
                             <p>You have not currently registered any applications.</p>
                             :
                             <ul className="list-group">
-                                {props.applications.map(app => <div key={app.name} className="list-group-item border-0">{app.name}</div>)}
+                                {applications.map(app =>
+                                    <div key={app.name} className="list-group-item border-0 selectable rounded">
+                                        <div className="d-flex justify-content-between">
+                                            <h5>{app.name}</h5>
+                                            <button className="btn btn-secondary px-4">Edit</button>
+                                        </div>
+                                        <p>Callback URL: <a href={app.redirectUri}>{app.redirectUri}</a></p>
+                                    </div>
+                                )}
                             </ul>
                     }
                 </div>

@@ -5,18 +5,28 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jsg.authserver.helpers.JsonObject;
 import com.jsg.authserver.libs.sql.MySQLRepository;
 import com.jsg.authserver.libs.sql.SQLColumn;
 import com.jsg.authserver.libs.sql.SQLEntity;
 import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
 
-public class App implements SQLEntity {
+public class App implements SQLEntity, JsonObject {
 	
+	@JsonIgnore
 	private String clientId;
+	
+	@JsonIgnore
 	private String clientSecret;
+	
+	@JsonIgnore
 	private String accessTokenSecret;
+	
+	@JsonIgnore
 	private long associatedAccountId;
 
 	@JsonProperty
@@ -95,6 +105,17 @@ public class App implements SQLEntity {
 		map.put("associated_account_id", associatedAccountId);
 		map.put("name", name);
 		return map;
+	}
+
+	@Override
+	public String writeValueAsString() {
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(this);
+		} catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 }
