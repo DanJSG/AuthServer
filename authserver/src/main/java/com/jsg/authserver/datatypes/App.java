@@ -6,6 +6,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jsg.authserver.helpers.JsonObject;
@@ -16,9 +18,6 @@ import com.jsg.authserver.libs.sql.SQLRepository;
 import com.jsg.authserver.libs.sql.SQLTable;
 
 public class App implements SQLEntity, JsonObject {
-	
-	@JsonIgnore
-	private String clientId;
 	
 	@JsonIgnore
 	private String clientSecret;
@@ -34,6 +33,10 @@ public class App implements SQLEntity, JsonObject {
 	
 	@JsonProperty
 	private String redirectUri;
+	
+	@JsonProperty
+	@JsonInclude(Include.NON_EMPTY)
+	private String clientId;
 
 	@JsonCreator
 	private App() {}

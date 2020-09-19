@@ -1,8 +1,10 @@
 import React from 'react';
+import { updateApp } from '../services/appregistration';
+import { getApps } from '../services/appregistration';
 
 function AppRegistrationModal(props) {
 
-    const saveClicked = (e) => {
+    const saveClicked = async (e) => {
         e.preventDefault();
         const name = e.target.elements.name.value === undefined || e.target.elements.name.value == null ? "" : e.target.elements.name.value.trim();
         const uri = e.target.elements.redirectUri.value === undefined || e.target.elements.redirectUri.value == null ? "" : e.target.elements.redirectUri.value.trim();
@@ -10,8 +12,12 @@ function AppRegistrationModal(props) {
         e.target.elements.redirectUri.value = null;
         console.log(name);
         console.log(uri);
-        // send request
-        setTimeout(() => props.close(), 300);
+        const response = await updateApp(props.applications[props.currentAppIndex].clientId, name, uri, localStorage.getItem("acc.tok"));
+        if (!response)
+            console.log("Something failed whilst updating application.");
+        const apps = await getApps(localStorage.getItem("acc.tok"));
+        props.setApplications(apps);
+        setTimeout(() => props.close(), 250);
     }
 
     const cancelClicked = (e) => {

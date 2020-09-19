@@ -23,7 +23,6 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, 
 			Object handler) throws Exception {
-		System.out.println("IN REQUEST INTERCEPTOR");
 		String method = request.getMethod();
 		if(!method.contentEquals("POST") && !method.contentEquals("GET") && 
 		   !method.contentEquals("PUT") && !method.contentEquals("DELETE")) {
@@ -35,12 +34,15 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 	}
 	
 	private boolean checkTokens(AuthToken tokenA, AuthToken tokenB) {
-		if(tokenA == null || tokenB == null)
+		if(tokenA == null || tokenB == null) {
 			return false;
-		if(!tokenA.verify(ACCESS_TOKEN_SECRET) || !tokenB.verify(ACCESS_TOKEN_SECRET))
+		}
+		if(!tokenA.verify(ACCESS_TOKEN_SECRET) || !tokenB.verify(ACCESS_TOKEN_SECRET)) {
 			return false;
-		if(tokenA.getToken().contentEquals(tokenB.getToken()))
+		}
+		if(tokenA.getToken().contentEquals(tokenB.getToken())) {
 			return false;
+		}
 		return true;
 	}
 	

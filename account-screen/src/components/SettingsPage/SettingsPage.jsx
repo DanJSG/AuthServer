@@ -8,15 +8,12 @@ import { getApps } from './services/appregistration';
 
 function SettingsPage() {
 
-    const toggleShowEditAppModal = () => {
-        setEditAppModalVisible(prevVisibility => !prevVisibility);
-    }
-
     const [applications, setApplications] = useState(null);
     const [authorized, setAuthorized] = useState(false);
     const [authChecked, setAuthChecked] = useState(false);
     const [editAppModalVisible, setEditAppModalVisible] = useState(false);
     const [currentTab, setCurrentTab] = useState(0);
+    const [currentAppIndex, setCurrentAppIndex] = useState(null);
     const [tabs, setTabs] = useState([
         {
             name: "General",
@@ -29,6 +26,16 @@ function SettingsPage() {
             active: false
         },
     ])
+
+    const showEditAppModal = (index) => {
+        setEditAppModalVisible(true);
+        setCurrentAppIndex(index);
+    }
+
+    const hideEditAppModal = () => {
+        setEditAppModalVisible(false);
+        setCurrentAppIndex(null);
+    }
 
     useEffect(() => {
         async function checkAuth() {
@@ -65,7 +72,7 @@ function SettingsPage() {
             case 0:
                 return <GeneralTab></GeneralTab>
             case 1:
-                return <DeveloperTab applications={applications} edit={toggleShowEditAppModal}></DeveloperTab>
+                return <DeveloperTab applications={applications} edit={showEditAppModal}></DeveloperTab>
         }
     }
 
@@ -80,7 +87,7 @@ function SettingsPage() {
                     :
                     authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
             }
-            <AppRegistrationModal title={"Edit Application"} close={toggleShowEditAppModal} visible={editAppModalVisible}></AppRegistrationModal>
+            <AppRegistrationModal setApplications={setApplications} applications={applications} currentAppIndex={currentAppIndex} title={"Edit Application"} close={hideEditAppModal} visible={editAppModalVisible}></AppRegistrationModal>
         </div >
     );
 }

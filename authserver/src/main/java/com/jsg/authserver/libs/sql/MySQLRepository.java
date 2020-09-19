@@ -48,7 +48,6 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 				statement.addBatch();
 				count++;
 				if(count % 500 == 0 || count == objects.size()) {
-					System.out.println("Executing batched statement!");
 					statement.executeBatch();
 					connection.commit();
 					connection.close();
@@ -125,16 +124,43 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 	}
 	
 	@Override
+	public <V, U> Boolean updateWhereEquals(SQLColumn clauseColumn, V clauseValue, Map<SQLColumn, U> row) {
+		ArrayList<SQLColumn> columns = new ArrayList<>(row.size());
+		ArrayList<U> values = new ArrayList<>(row.size());
+		row.forEach((key, value) -> {
+			columns.add(key);
+			values.add(value);
+		});
+		return updateWhereEquals(clauseColumn, clauseValue, columns, values);
+	}
+	
+	@Override
 	public <V, U> Boolean updateWhereEquals(SQLColumn clauseColumn, V clauseValue, SQLColumn updateColumn, U updateValue) {
+		return updateWhereEquals(clauseColumn, clauseValue, Arrays.asList(updateColumn), Arrays.asList(updateValue));
+	}
+	
+	@Override
+	public <V, U> Boolean updateWhereEquals(SQLColumn clauseColumn, V clauseValue, List<SQLColumn> updateColumns, List<U> updateValues) {
 		Connection connection = getConnection();
 		if(connection == null) {
 			return false;
 		}
-		String query = "UPDATE `" + tableName + "` SET " + updateColumn.name() + "= ? WHERE " + clauseColumn.name() + " = ?;";
+		String query = "UPDATE `" + tableName + "` SET ";
+		if(updateColumns.size() != updateValues.size())
+			return false;
+		for(int i=0; i < updateColumns.size(); i++) {
+			query += updateColumns.get(i).name() + "=?";
+			if(i < updateColumns.size() - 1)
+				query += ", ";
+		}
+		query += " WHERE " + clauseColumn.name() + "=?;";
 		try {
 			PreparedStatement statement = connection.prepareStatement(query);
-			statement.setObject(1, updateValue);
-			statement.setObject(2, clauseValue);
+			int i = 0;
+			for(; i < updateColumns.size(); i++) {
+				statement.setObject(i + 1, updateValues.get(i));
+			}
+			statement.setObject(i + 1, clauseValue);
 			statement.executeUpdate();
 			connection.commit();
 			connection.close();

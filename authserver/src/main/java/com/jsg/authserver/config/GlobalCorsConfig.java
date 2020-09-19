@@ -3,6 +3,7 @@ package com.jsg.authserver.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -24,6 +25,7 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
 		registry.addMapping("/api/v1/settings/auth*").allowCredentials(true).allowedOrigins(origins);
 		registry.addMapping("/api/v1/app/register*").allowCredentials(true).allowedOrigins(origins);
 		registry.addMapping("/api/v1/app/getAll*").allowCredentials(true).allowedOrigins(origins);
+		registry.addMapping("/api/v1/app/update*").allowCredentials(true).allowedOrigins(origins).allowedMethods(HttpMethod.PUT.toString());
 		// allow all origins as this endpoint can be accessed from external applications
 		registry.addMapping("/api/v1/token*").allowCredentials(true).allowedOrigins("*");
 		registry.addMapping("/api/v1/userInfo*").allowCredentials(true).allowedOrigins("*");
