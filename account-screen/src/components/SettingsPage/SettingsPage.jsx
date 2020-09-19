@@ -25,7 +25,7 @@ function SettingsPage() {
         {
             name: "Developer",
             icon: <i className="fa fa-code"></i>,
-            rendering: <DeveloperTab toggleModal={toggleShowEditAppModal}></DeveloperTab>,
+            rendering: <DeveloperTab edit={toggleShowEditAppModal}></DeveloperTab>,
             active: false
         },
     ])
@@ -68,7 +68,7 @@ function SettingsPage() {
                     :
                     authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
             }
-            <AppRegistrationModal toggleModal={toggleShowEditAppModal} show={editAppModalVisible}></AppRegistrationModal>
+            <AppRegistrationModal title={"Edit Application"} close={toggleShowEditAppModal} visible={editAppModalVisible}></AppRegistrationModal>
         </div >
     );
 }

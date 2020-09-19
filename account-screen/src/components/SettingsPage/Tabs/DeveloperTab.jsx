@@ -55,7 +55,7 @@ function DeveloperTab(props) {
                                     <div key={index} className="list-group-item border-0 selectable rounded">
                                         <div className="d-flex justify-content-between">
                                             <h5>{app.name}</h5>
-                                            <button onClick={props.toggleModal} className="btn btn-secondary my-1" style={{ width: "7%" }}>Edit</button>
+                                            <button onClick={() => props.edit(index)} className="btn btn-secondary my-1" style={{ width: "7%" }}>Edit</button>
                                         </div>
                                         <div className="d-flex justify-content-between">
                                             <p>Callback URL: <a href={app.redirectUri}>{app.redirectUri}</a></p>
