@@ -3,12 +3,17 @@ import DeveloperTab from './Tabs/DeveloperTab';
 import GeneralTab from './Tabs/GeneralTab';
 import Sidebar from './Sidebar/Sidebar';
 import { authorize } from './services/auth'
+import AppRegistrationModal from './Modals/AppRegistrationModal';
 
 function SettingsPage() {
 
+    const toggleShowEditAppModal = () => {
+        setEditAppModalVisible(prevVisibility => !prevVisibility);
+    }
+
     const [authorized, setAuthorized] = useState(false);
     const [authChecked, setAuthChecked] = useState(false);
-    const [user, setUser] = useState(null);
+    const [editAppModalVisible, setEditAppModalVisible] = useState(false);
     const [currentTab, setCurrentTab] = useState(<GeneralTab></GeneralTab>);
     const [tabs, setTabs] = useState([
         {
@@ -20,7 +25,7 @@ function SettingsPage() {
         {
             name: "Developer",
             icon: <i className="fa fa-code"></i>,
-            rendering: <DeveloperTab></DeveloperTab>,
+            rendering: <DeveloperTab toggleModal={toggleShowEditAppModal}></DeveloperTab>,
             active: false
         },
     ])
@@ -33,7 +38,6 @@ function SettingsPage() {
                 return;
             }
             setAuthorized(true);
-            setUser(fetchedUser);
             setAuthChecked(true);
         }
         if (!authChecked)
@@ -64,6 +68,7 @@ function SettingsPage() {
                     :
                     authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
             }
+            <AppRegistrationModal toggleModal={toggleShowEditAppModal} show={editAppModalVisible}></AppRegistrationModal>
         </div >
     );
 }
