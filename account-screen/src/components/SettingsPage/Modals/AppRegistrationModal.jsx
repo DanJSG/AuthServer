@@ -4,6 +4,14 @@ function AppRegistrationModal(props) {
 
     const saveClicked = (e) => {
         e.preventDefault();
+        const name = e.target.elements.name.value === undefined || e.target.elements.name.value == null ? "" : e.target.elements.name.value.trim();
+        const uri = e.target.elements.redirectUri.value === undefined || e.target.elements.redirectUri.value == null ? "" : e.target.elements.redirectUri.value.trim();
+        e.target.elements.name.value = null;
+        e.target.elements.redirectUri.value = null;
+        console.log(name);
+        console.log(uri);
+        // send request
+        setTimeout(() => props.close(), 300);
     }
 
     const cancelClicked = (e) => {
@@ -33,15 +41,15 @@ function AppRegistrationModal(props) {
                                 </div>
                             </div>
                             <div className="modal-body">
-                                <form>
+                                <form onSubmit={saveClicked}>
                                     <div className="form-group">
-                                        <input className="form-control selectable w-75" placeholder="Name"></input>
+                                        <input name="name" className="form-control selectable w-75" placeholder="Name"></input>
                                     </div>
                                     <div className="form-group">
-                                        <input className="form-control selectable w-75" placeholder="New redirect URI"></input>
+                                        <input name="redirectUri" className="form-control selectable w-75" placeholder="New redirect URI"></input>
                                     </div>
                                     <div className="form-group">
-                                        <button className="btn btn-primary mx-1" onClick={saveClicked}>Save</button>
+                                        <button className="btn btn-primary mx-1">Save</button>
                                         <button className="btn btn-secondary mx-1" onClick={cancelClicked}>Cancel</button>
                                     </div>
                                 </form>
