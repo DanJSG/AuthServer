@@ -3,30 +3,21 @@ import { getApps, registerApp } from '../services/appregistration';
 
 function DeveloperTab(props) {
 
-    const [applications, setApplications] = useState(null);
-
-    const registerAppSubmitted = (e) => {
+    const registerAppSubmitted = async (e) => {
         e.preventDefault();
         const name = e.target.elements.appName.value;
         const redirectUri = e.target.elements.appRedirectUri.value;
-        registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
         e.target.elements.appName.value = null;
         e.target.elements.appRedirectUri.value = null;
+        await registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
+        const apps = await getApps(localStorage.getItem("acc.tok"));
+        props.updateApplications(apps);
     }
-
-    useEffect(() => {
-        async function fetchApps() {
-            const apps = await getApps(localStorage.getItem("acc.tok"));
-            setApplications(apps);
-        }
-        fetchApps();
-    })
 
     return (
         <div className="col-10 w-100">
             <div className="ml-3 w-100">
                 <h1>Developer Settings</h1>
-                <p className="text-danger"><i><b>None of this has yet been implemented in the backend and so is not currently functional.</b></i></p>
                 <hr />
                 <div>
                     <h3 className="mb-3">Register Application</h3>
@@ -47,15 +38,19 @@ function DeveloperTab(props) {
                 <div>
                     <h3 className="mb-3">Existing Applications</h3>
                     {
-                        applications === undefined || applications === null ?
-                            <p>You have not currently registered any applications.</p>
+                        props.applications === undefined || props.applications === null ?
+                            <p>You have not currently registered any props.applications.</p>
                             :
                             <ul className="list-group">
-                                {applications.map(app =>
-                                    <div key={app.name} className="list-group-item border-0 selectable rounded">
+                                {props.applications.map((app, index) =>
+                                    <div key={index} className="list-group-item border-0 selectable rounded">
                                         <div className="d-flex justify-content-between">
                                             <h5>{app.name}</h5>
-                                            <button className="btn btn-secondary px-4">Edit</button>
+                                            <button onClick={() => props.edit(index)} className="btn btn-secondary my-1" style={{ width: "6%" }}>Edit</button>
+                                        </div>
+                                        <div className="d-flex justify-content-between">
+                                            <p>Client ID: <b>{app.clientId}</b></p>
+                                            <button onClick={() => props.delete(index)} className="btn btn-danger my-1" style={{ width: "6%" }}>Delete</button>
                                         </div>
                                         <p>Callback URL: <a href={app.redirectUri}>{app.redirectUri}</a></p>
                                     </div>

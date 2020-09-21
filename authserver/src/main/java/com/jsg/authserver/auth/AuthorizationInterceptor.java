@@ -23,7 +23,6 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, 
 			Object handler) throws Exception {
-		System.out.println("IN REQUEST INTERCEPTOR");
 		String method = request.getMethod();
 		if(!method.contentEquals("POST") && !method.contentEquals("GET") && 
 		   !method.contentEquals("PUT") && !method.contentEquals("DELETE")) {
