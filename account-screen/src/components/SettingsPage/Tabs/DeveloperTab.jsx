@@ -48,7 +48,7 @@ function DeveloperTab(props) {
                                         </div>
                                         <div className="d-flex justify-content-between">
                                             <p>Client ID: <b>{app.clientId}</b></p>
-                                            <button className="btn btn-danger my-1" style={{ width: "6%" }}>Delete</button>
+                                            <button onClick={props.delete} className="btn btn-danger my-1" style={{ width: "6%" }}>Delete</button>
                                         </div>
                                         <p>Callback URL: <a href={app.redirectUri}>{app.redirectUri}</a></p>
                                     </div>

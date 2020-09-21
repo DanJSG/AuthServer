@@ -4,6 +4,7 @@ import GeneralTab from './Tabs/GeneralTab';
 import Sidebar from './Sidebar/Sidebar';
 import { authorize } from './services/auth'
 import AppRegistrationModal from './Modals/AppRegistrationModal';
+import ConfirmationModal from './Modals/ConfirmationModal';
 import { getApps } from './services/appregistration';
 
 function SettingsPage() {
@@ -12,6 +13,7 @@ function SettingsPage() {
     const [authorized, setAuthorized] = useState(false);
     const [authChecked, setAuthChecked] = useState(false);
     const [editAppModalVisible, setEditAppModalVisible] = useState(false);
+    const [confirmationModalVisible, setconfirmationModalVisible] = useState(false);
     const [currentTab, setCurrentTab] = useState(0);
     const [currentAppIndex, setCurrentAppIndex] = useState(null);
     const [tabs, setTabs] = useState([
@@ -35,6 +37,14 @@ function SettingsPage() {
     const hideEditAppModal = () => {
         setEditAppModalVisible(false);
         setCurrentAppIndex(null);
+    }
+
+    const showConfirmationModal = () => setconfirmationModalVisible(true);
+    const hideConfirmationModal = () => setconfirmationModalVisible(false);
+
+    const confirmAppDeletion = () => {
+        console.log("Deleting app");
+        setTimeout(() => hideConfirmationModal, 250);
     }
 
     useEffect(() => {
@@ -72,7 +82,7 @@ function SettingsPage() {
             case 0:
                 return <GeneralTab></GeneralTab>
             case 1:
-                return <DeveloperTab applications={applications} edit={showEditAppModal}></DeveloperTab>
+                return <DeveloperTab applications={applications} edit={showEditAppModal} delete={showConfirmationModal}></DeveloperTab>
         }
     }
 
@@ -88,6 +98,7 @@ function SettingsPage() {
                     authChecked ? window.location.href = "http://local.courier.net:3010/oauth2/authorize" : <p>Checking priveleges, please wait...</p>
             }
             <AppRegistrationModal setApplications={setApplications} applications={applications} currentAppIndex={currentAppIndex} title={"Edit Application"} close={hideEditAppModal} visible={editAppModalVisible}></AppRegistrationModal>
+            <ConfirmationModal title={"Are you sure you want to remove this application?"} close={hideConfirmationModal} ok={confirmAppDeletion} visible={confirmationModalVisible}></ConfirmationModal>
         </div >
     );
 }
