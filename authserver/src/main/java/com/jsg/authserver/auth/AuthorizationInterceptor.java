@@ -34,15 +34,12 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 	}
 	
 	private boolean checkTokens(AuthToken tokenA, AuthToken tokenB) {
-		if(tokenA == null || tokenB == null) {
+		if(tokenA == null || tokenB == null)
 			return false;
-		}
-		if(!tokenA.verify(ACCESS_TOKEN_SECRET) || !tokenB.verify(ACCESS_TOKEN_SECRET)) {
+		if(!tokenA.verify(ACCESS_TOKEN_SECRET) || !tokenB.verify(ACCESS_TOKEN_SECRET))
 			return false;
-		}
-		if(tokenA.getToken().contentEquals(tokenB.getToken())) {
+		if(tokenA.getToken().contentEquals(tokenB.getToken()))
 			return false;
-		}
 		return true;
 	}
 	
