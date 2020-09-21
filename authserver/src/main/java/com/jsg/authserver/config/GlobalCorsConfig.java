@@ -26,6 +26,7 @@ public class GlobalCorsConfig implements WebMvcConfigurer {
 		registry.addMapping("/api/v1/app/register*").allowCredentials(true).allowedOrigins(origins);
 		registry.addMapping("/api/v1/app/getAll*").allowCredentials(true).allowedOrigins(origins);
 		registry.addMapping("/api/v1/app/update*").allowCredentials(true).allowedOrigins(origins).allowedMethods(HttpMethod.PUT.toString());
+		registry.addMapping("api/v1/app/delete*").allowCredentials(true).allowedOrigins(origins).allowedMethods(HttpMethod.DELETE.toString());
 		// allow all origins as this endpoint can be accessed from external applications
 		registry.addMapping("/api/v1/token*").allowCredentials(true).allowedOrigins("*");
 		registry.addMapping("/api/v1/userInfo*").allowCredentials(true).allowedOrigins("*");

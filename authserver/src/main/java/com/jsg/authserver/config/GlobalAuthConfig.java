@@ -19,7 +19,8 @@ public class GlobalAuthConfig implements WebMvcConfigurer {
 				"/api/v1/settings/auth*",
 				"/api/v1/app/register*",
 				"/api/v1/app/getAll*",
-				"/api/v1/app/update*"
+				"/api/v1/app/update*",
+				"/api/v1/app/delete*"
 		);
 	}
 

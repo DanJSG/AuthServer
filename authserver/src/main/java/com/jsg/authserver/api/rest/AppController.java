@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -68,18 +69,28 @@ public class AppController extends ApiController {
 	public ResponseEntity<String> update(@RequestHeader(HttpHeaders.AUTHORIZATION) AuthToken token, @RequestBody App appDetails) {
 		SQLRepository<App> repo = new MySQLRepository<>(SQLTable.APPS);
 		List<App> apps = repo.findWhereEqual(SQLColumn.CLIENT_ID, appDetails.getClientId(), new AppBuilder());
-		if(apps == null) {
-			System.out.println("Apps were null");
+		if(apps == null)
 			return BAD_REQUEST_HTTP_RESPONSE;
-		}
 		App app = apps.get(0);
 		if(app.getAssociatedAccountId() != token.getId())
 			return UNAUTHORIZED_HTTP_RESPONSE;
-		
 		Map<SQLColumn, String> updateMap = new HashMap<>();
 		updateMap.put(SQLColumn.NAME, appDetails.getName());
 		updateMap.put(SQLColumn.REDIRECT_URI, appDetails.getRedirectUri());
 		if(!repo.updateWhereEquals(SQLColumn.CLIENT_ID, appDetails.getClientId(), updateMap))
+			return INTERNAL_SERVER_ERROR_HTTP_RESPONSE;
+		return ResponseEntity.status(HttpStatus.OK).body(null);
+	}
+	
+	@DeleteMapping(value = "/app/delete", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> delete(@RequestHeader(HttpHeaders.AUTHORIZATION) AuthToken token, @RequestBody App app) {
+		SQLRepository<App> repo = new MySQLRepository<>(SQLTable.APPS);
+		List<App> apps = repo.findWhereEqual(SQLColumn.CLIENT_ID, app.getClientId(), new AppBuilder());
+		if(apps == null)
+			return BAD_REQUEST_HTTP_RESPONSE;
+		if(app.getAssociatedAccountId() != token.getId())
+			return UNAUTHORIZED_HTTP_RESPONSE;
+		if(repo.deleteWhereEquals(SQLColumn.CLIENT_ID, app.getClientId()))
 			return INTERNAL_SERVER_ERROR_HTTP_RESPONSE;
 		return ResponseEntity.status(HttpStatus.OK).body(null);
 	}
