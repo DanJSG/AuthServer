@@ -88,9 +88,9 @@ public class AppController extends ApiController {
 		List<App> apps = repo.findWhereEqual(SQLColumn.CLIENT_ID, app.getClientId(), new AppBuilder());
 		if(apps == null)
 			return BAD_REQUEST_HTTP_RESPONSE;
-		if(app.getAssociatedAccountId() != token.getId())
+		if(apps.get(0).getAssociatedAccountId() != token.getId())
 			return UNAUTHORIZED_HTTP_RESPONSE;
-		if(repo.deleteWhereEquals(SQLColumn.CLIENT_ID, app.getClientId()))
+		if(!repo.deleteWhereEquals(SQLColumn.CLIENT_ID, app.getClientId()))
 			return INTERNAL_SERVER_ERROR_HTTP_RESPONSE;
 		return ResponseEntity.status(HttpStatus.OK).body(null);
 	}

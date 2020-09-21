@@ -60,3 +60,25 @@ export const updateApp = async (clientId, name, redirectUri, token) => {
             return false;
         })
 }
+
+export const deleteApp = async (clientId, name, redirectUri, token) => {
+    const url = "http://local.courier.net:8090/api/v1/app/delete";
+    return fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+            "Authorization": "Bearer" + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name: name, redirectUri: redirectUri, clientId: clientId })
+    })
+        .then(response => {
+            if (response.status !== 200)
+                throw Error("Error deleting application.")
+            return true;
+        })
+        .catch(error => {
+            console.error(error);
+            return false;
+        })
+}

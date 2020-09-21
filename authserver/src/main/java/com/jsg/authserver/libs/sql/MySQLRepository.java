@@ -176,7 +176,7 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 		Connection connection = getConnection();
 		if(connection == null)
 			return false;
-		String query = "DELETE FROM `" + tableName + " WHERE " + clauseColumn.name() + "=?;";
+		String query = "DELETE FROM `" + tableName + "` WHERE " + clauseColumn.name() + "=?;";
 		try {
 			PreparedStatement statement = connection.prepareStatement(query);
 			statement.setObject(1, clauseValue);

@@ -5,7 +5,7 @@ import Sidebar from './Sidebar/Sidebar';
 import { authorize } from './services/auth'
 import AppRegistrationModal from './Modals/AppRegistrationModal';
 import ConfirmationModal from './Modals/ConfirmationModal';
-import { getApps } from './services/appregistration';
+import { deleteApp, getApps } from './services/appregistration';
 
 function SettingsPage() {
 
@@ -39,12 +39,21 @@ function SettingsPage() {
         setCurrentAppIndex(null);
     }
 
-    const showConfirmationModal = () => setconfirmationModalVisible(true);
-    const hideConfirmationModal = () => setconfirmationModalVisible(false);
+    const showConfirmationModal = (index) => {
+        setconfirmationModalVisible(true);
+        setCurrentAppIndex(index);
+    }
+    const hideConfirmationModal = () => {
+        setconfirmationModalVisible(false);
+        setCurrentAppIndex(null);
+    };
 
-    const confirmAppDeletion = () => {
-        console.log("Deleting app");
-        setTimeout(() => hideConfirmationModal, 250);
+    const confirmAppDeletion = async () => {
+        const { clientId, name, redirectUri } = applications[currentAppIndex];
+        await deleteApp(clientId, name, redirectUri, localStorage.getItem("acc.tok"));
+        const apps = await getApps(localStorage.getItem("acc.tok"));
+        setApplications(apps);
+        hideConfirmationModal();
     }
 
     useEffect(() => {
@@ -82,7 +91,7 @@ function SettingsPage() {
             case 0:
                 return <GeneralTab></GeneralTab>
             case 1:
-                return <DeveloperTab applications={applications} edit={showEditAppModal} delete={showConfirmationModal}></DeveloperTab>
+                return <DeveloperTab applications={applications} updateApplications={setApplications} edit={showEditAppModal} delete={showConfirmationModal}></DeveloperTab>
         }
     }
 
