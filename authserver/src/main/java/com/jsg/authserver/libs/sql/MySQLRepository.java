@@ -171,6 +171,25 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 		}
 	}
 	
+	@Override
+	public <V, U> Boolean deleteWhereEquals(SQLColumn clauseColumn, V clauseValue) {
+		Connection connection = getConnection();
+		if(connection == null)
+			return false;
+		String query = "DELETE FROM `" + tableName + " WHERE " + clauseColumn.name() + "=?;";
+		try {
+			PreparedStatement statement = connection.prepareStatement(query);
+			statement.setObject(1, clauseValue);
+			statement.executeUpdate();
+			connection.commit();
+			connection.close();
+			return true;
+		} catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 	private String stringifyKeys(Map<String, Object> valueMap) {
 		String keyString = new String();
 		Object[] keys = valueMap.keySet().toArray();
@@ -224,6 +243,5 @@ public class MySQLRepository<T extends SQLEntity> implements SQLRepository<T>{
 		connection.close();
 		return objectList;
 	}
-
 	
 }

@@ -27,4 +27,6 @@ public interface SQLRepository<T extends SQLEntity> {
 	
 	public <V, U> Boolean updateWhereEquals(SQLColumn clauseColumn, V clauseValue, List<SQLColumn> updateColumns, List<U> updateValues);
 	
+	public <V, U> Boolean deleteWhereEquals(SQLColumn clauseColumn, V clauseValue);
+	
 }
