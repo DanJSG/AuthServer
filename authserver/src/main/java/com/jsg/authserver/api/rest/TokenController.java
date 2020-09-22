@@ -82,10 +82,12 @@ public final class TokenController extends ApiController {
 	private ResponseEntity<String> getAccessTokenWithRefreshToken(String client_id, String refresh_token,
 			String refreshCookie, HttpServletResponse response) throws Exception {
 		if(refresh_token == null || refreshCookie == null) {
+			System.out.println("One of the tokens is missing...");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		TokenPair tokenPair = new TokenPair(client_id, refreshCookie, refresh_token);
 		if(!tokenPair.verifyRefreshTokens(REFRESH_TOKEN_SECRET)) {
+			System.out.println("Failed to verify one of the tokens...");
 			return UNAUTHORIZED_HTTP_RESPONSE;
 		}
 		SQLRepository<App> appRepo = new MySQLRepository<>(SQLTable.APPS);

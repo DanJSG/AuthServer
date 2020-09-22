@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getApps, registerApp } from '../services/appregistration';
+import { refreshAccessToken } from '../services/auth';
 
 function DeveloperTab(props) {
 
@@ -9,7 +10,11 @@ function DeveloperTab(props) {
         const redirectUri = e.target.elements.appRedirectUri.value;
         e.target.elements.appName.value = null;
         e.target.elements.appRedirectUri.value = null;
-        await registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
+        let registered = await registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
+        if (!registered) {
+            await refreshAccessToken();
+            registered = await registerApp(name, redirectUri, localStorage.getItem("acc.tok"));
+        }
         const apps = await getApps(localStorage.getItem("acc.tok"));
         props.updateApplications(apps);
     }
