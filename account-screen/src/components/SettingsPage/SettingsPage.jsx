@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DeveloperTab from './Tabs/DeveloperTab';
 import GeneralTab from './Tabs/GeneralTab';
 import Sidebar from './Sidebar/Sidebar';
-import { authorize } from './services/auth'
+import { authorize, refreshAccessToken } from './services/auth'
 import AppRegistrationModal from './Modals/AppRegistrationModal';
 import ConfirmationModal from './Modals/ConfirmationModal';
 import { deleteApp, getApps } from './services/appregistration';
@@ -50,24 +50,36 @@ function SettingsPage() {
 
     const confirmAppDeletion = async () => {
         const { clientId, name, redirectUri } = applications[currentAppIndex];
-        await deleteApp(clientId, name, redirectUri, localStorage.getItem("acc.tok"));
-        const apps = await getApps(localStorage.getItem("acc.tok"));
+        let deleted = await deleteApp(clientId, name, redirectUri, localStorage.getItem("acc.tok"));
+        if (!deleted) {
+            await refreshAccessToken();
+            await deleteApp(clientId, name, redirectUri, localStorage.getItem("acc.tok"));
+        }
+        let apps = await getApps(localStorage.getItem("acc.tok"));
         setApplications(apps);
         hideConfirmationModal();
     }
 
     useEffect(() => {
         async function checkAuth() {
-            const fetchedUser = await authorize();
+            let fetchedUser = await authorize();
             if (fetchedUser === null) {
-                setAuthChecked(true);
-                return;
+                await refreshAccessToken();
+                fetchedUser = await authorize();
+                if (fetchedUser === null) {
+                    setAuthChecked(true);
+                    return;
+                }
             }
             setAuthorized(true);
             setAuthChecked(true);
         }
         async function fetchApps() {
-            const apps = await getApps(localStorage.getItem("acc.tok"));
+            let apps = await getApps(localStorage.getItem("acc.tok"));
+            if (apps === null) {
+                await refreshAccessToken();
+                apps = await getApps(localStorage.getItem("acc.tok"));
+            }
             setApplications(apps);
         }
         if (!authChecked)

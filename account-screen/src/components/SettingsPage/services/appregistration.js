@@ -10,10 +10,13 @@ export const registerApp = async (name, redirectUri, token) => {
         body: JSON.stringify({ redirectUri: redirectUri, name: name })
     })
         .then(response => {
-            console.log(response);
+            if (response.status !== 200)
+                throw Error("Failed to register application.");
+            return true;
         })
         .catch(error => {
             console.error(error);
+            return false;
         });
 }
 
